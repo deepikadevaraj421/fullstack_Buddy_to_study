@@ -1,0 +1,5 @@
+node_modules
+.env
+check_sessions.js
+check_users.js
+test_*.js
