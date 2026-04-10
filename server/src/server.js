@@ -43,6 +43,7 @@ const connectDB = async () => {
   if (isConnected) return;
   await mongoose.connect(mongoUri);
   isConnected = true;
+  console.log('✅ Connected to MongoDB:', mongoUri.split('@')[1] || mongoUri);
 };
 
 app.use(cors(corsOptions));
@@ -52,7 +53,10 @@ app.use(express.json());
 if (isProduction) {
   app.use(async (req, res, next) => {
     try { await connectDB(); next(); }
-    catch (err) { res.status(500).json({ error: 'Database connection failed' }); }
+    catch (err) {
+      console.error('❌ MongoDB connection error:', err.message);
+      res.status(500).json({ error: 'Database connection failed' });
+    }
   });
 }
 
