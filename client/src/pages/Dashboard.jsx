@@ -19,6 +19,15 @@ const Dashboard = () => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const navigate = useNavigate();
 
+  const DUMMY_RECOMMENDATIONS = [
+    { userId: 'd1', name: 'Alice Johnson', clusterLabel: 'Consistent Planner', skillLevel: 'Advanced', compatibilityScore: 92, overlapPct: 75, subject: 'DSA', reasons: ['Same study pattern', 'Complementary skill levels', '75% schedule overlap'] },
+    { userId: 'd2', name: 'Bob Smith', clusterLabel: 'Night Owl', skillLevel: 'Intermediate', compatibilityScore: 85, overlapPct: 60, subject: 'DBMS', reasons: ['Similar commitment level', '60% schedule overlap', 'Complementary skill levels'] },
+    { userId: 'd3', name: 'Carol Davis', clusterLabel: 'Weekend Warrior', skillLevel: 'Advanced', compatibilityScore: 78, overlapPct: 50, subject: 'Machine Learning', reasons: ['Complementary skill levels', '50% schedule overlap', 'Basic compatibility'] },
+    { userId: 'd4', name: 'David Lee', clusterLabel: 'Balanced Learner', skillLevel: 'Intermediate', compatibilityScore: 74, overlapPct: 65, subject: 'Web Dev', reasons: ['65% schedule overlap', 'Similar commitment level'] },
+    { userId: 'd5', name: 'Emma Wilson', clusterLabel: 'Casual Learner', skillLevel: 'Advanced', compatibilityScore: 70, overlapPct: 45, subject: 'OS', reasons: ['Complementary skill levels', 'Basic compatibility'] },
+    { userId: 'd6', name: 'Frank Miller', clusterLabel: 'Sprint Learner', skillLevel: 'Beginner', compatibilityScore: 66, overlapPct: 55, subject: 'Math', reasons: ['55% schedule overlap', 'Basic compatibility'] },
+  ];
+
   useEffect(() => {
     loadUser();
     loadGroups();
@@ -50,7 +59,6 @@ const Dashboard = () => {
 
   const loadRecommendationsOnMount = async () => {
     try {
-      // Load all users for the "All Matches" section
       const usersRes = await api.get('/users');
       const allUsers = usersRes.data.map(u => ({
         userId: u._id,
@@ -59,20 +67,15 @@ const Dashboard = () => {
         skillLevel: u.subjects?.[0]?.skill || 'N/A',
         compatibilityScore: 85,
         overlapPct: 70,
-        reasons: [
-          'Available for study sessions',
-          'Similar study patterns',
-          'Good skill match'
-        ]
+        reasons: ['Available for study sessions', 'Similar study patterns', 'Good skill match']
       }));
-      setAllMatches(allUsers);
-
-      // Load default recommendations (no subject filter)
+      // Use real users if available, else dummy
+      setAllMatches(allUsers.length > 0 ? allUsers : DUMMY_RECOMMENDATIONS);
       await loadRecommendations();
     } catch (err) {
       console.error('Failed to load users:', err);
-      setAllMatches([]);
-      setRecommendations([]);
+      setAllMatches(DUMMY_RECOMMENDATIONS);
+      setRecommendations(DUMMY_RECOMMENDATIONS.slice(0, 3));
     }
   };
 
@@ -82,10 +85,11 @@ const Dashboard = () => {
         ? `/match/recommendations?subject=${selectedSubject}`
         : '/match/recommendations';
       const res = await api.get(url);
-      setRecommendations(res.data);
+      // Use real recommendations if available, else dummy
+      setRecommendations(res.data.length > 0 ? res.data : DUMMY_RECOMMENDATIONS.slice(0, 3));
     } catch (err) {
       console.error('Failed to load recommendations:', err);
-      setRecommendations([]);
+      setRecommendations(DUMMY_RECOMMENDATIONS.slice(0, 3));
     }
   };
 
