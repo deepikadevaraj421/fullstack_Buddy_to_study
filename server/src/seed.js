@@ -103,22 +103,19 @@ async function seedDatabase() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Group.deleteMany({});
-    await Session.deleteMany({});
-    await Task.deleteMany({});
-    console.log('Cleared existing data');
-
-    // Create users
+    // Only insert dummy users if they don't already exist
     const users = [];
     for (const userData of dummyUsers) {
-      const passwordHash = await bcrypt.hash(userData.password, 10);
-      const user = new User({ ...userData, passwordHash });
-      delete user.password;
-      await user.save();
+      let user = await User.findOne({ email: userData.email });
+      if (!user) {
+        const passwordHash = await bcrypt.hash(userData.password, 10);
+        user = new User({ ...userData, passwordHash });
+        await user.save();
+        console.log(`Created user: ${user.name}`);
+      } else {
+        console.log(`Skipped (already exists): ${user.name}`);
+      }
       users.push(user);
-      console.log(`Created user: ${user.name}`);
     }
 
     // Create groups
