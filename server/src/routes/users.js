@@ -21,7 +21,7 @@ router.get('/:id', auth, async (req, res) => {
 // Get all users (excluding current user)
 router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.userId } }).select('-passwordHash');
+    const users = await User.find({ _id: { $ne: req.user._id } }).select('-passwordHash');
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });

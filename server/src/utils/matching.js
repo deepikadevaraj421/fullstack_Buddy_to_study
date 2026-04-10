@@ -110,8 +110,7 @@ const generateReasons = (overlapPct, clusterSim, skillDiff, commitSim) => {
 // Find top matches for a user using hybrid recommendation
 export const findMatches = async (User, currentUser, subject, limit = 3) => {
   let query = {
-    _id: { $ne: currentUser._id },
-    onboardingComplete: true
+    _id: { $ne: currentUser._id }
   };
 
   // If subject is specified, filter by users who have that subject
@@ -122,21 +121,7 @@ export const findMatches = async (User, currentUser, subject, limit = 3) => {
   // Get all potential candidates
   const allCandidates = await User.find(query);
 
-  // Filter candidates based on criteria
-  const candidates = [];
-  for (const candidate of allCandidates) {
-    // Check schedule overlap >= 40%
-    const overlapPct = calculateOverlap(currentUser.availability, candidate.availability);
-    if (overlapPct < 40) continue;
-
-    // Check if already in same group (simplified - in real app would check group memberships)
-    // For now, we'll skip this check as it requires group data
-
-    // Check if already invited (simplified - would need invite data)
-    // For now, we'll skip this check
-
-    candidates.push(candidate);
-  }
+  const candidates = allCandidates; // show all users, no overlap filter
 
   // Calculate scores for filtered candidates
   const scored = candidates.map(candidate => {
