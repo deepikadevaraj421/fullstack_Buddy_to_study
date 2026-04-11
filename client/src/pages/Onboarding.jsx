@@ -12,8 +12,25 @@ const Onboarding = () => {
   });
   const navigate = useNavigate();
 
-  const subjectOptions = ['DSA', 'Web Dev', 'Machine Learning', 'DBMS', 'OS', 'Networks'];
+  const [customSubject, setCustomSubject] = useState('');
+
+  const subjectOptions = [
+    'DSA', 'Web Dev', 'Machine Learning', 'DBMS', 'OS', 'Networks',
+    'Math', 'Physics', 'Chemistry', 'Biology', 'Statistics',
+    'Python', 'Java', 'C++', 'JavaScript', 'React', 'Node.js',
+    'Cloud Computing', 'Cyber Security', 'Artificial Intelligence',
+    'Data Structures', 'Algorithms', 'Software Engineering',
+    'Computer Architecture', 'Compiler Design', 'Digital Electronics'
+  ];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const addCustomSubject = () => {
+    const trimmed = customSubject.trim();
+    if (trimmed && !subjects.find(s => s.name === trimmed)) {
+      setSubjects([...subjects, { name: trimmed, skill: 'Intermediate' }]);
+    }
+    setCustomSubject('');
+  };
 
   const toggleSubject = (sub) => {
     if (subjects.find(s => s.name === sub)) {
@@ -92,7 +109,7 @@ const Onboarding = () => {
                   <button
                     key={sub}
                     onClick={() => toggleSubject(sub)}
-                    className={`px-6 py-3 rounded-lg font-medium transition ${
+                    className={`px-4 py-2 rounded-lg font-medium transition text-sm ${
                       subjects.find(s => s.name === sub)
                         ? 'bg-primary-600 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -101,6 +118,24 @@ const Onboarding = () => {
                     {sub}
                   </button>
                 ))}
+              </div>
+
+              {/* Custom subject input */}
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={customSubject}
+                  onChange={(e) => setCustomSubject(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCustomSubject()}
+                  placeholder="Type a subject not listed above..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                />
+                <button
+                  onClick={addCustomSubject}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium text-sm"
+                >
+                  + Add
+                </button>
               </div>
 
               {subjects.length > 0 && (
@@ -228,23 +263,6 @@ const Onboarding = () => {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Study Behavior</h2>
               <p className="text-gray-600">Help us understand your study habits</p>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Sessions per week: <span className="text-primary-600 font-semibold">{formData.behavior.frequencyTarget}</span>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={7}
-                  value={formData.behavior.frequencyTarget}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    behavior: { ...formData.behavior, frequencyTarget: parseInt(e.target.value) }
-                  })}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -258,28 +276,11 @@ const Onboarding = () => {
                   })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="morning">Morning (6-12)</option>
-                  <option value="afternoon">Afternoon (12-18)</option>
-                  <option value="evening">Evening (18-22)</option>
-                  <option value="night">Night (22-6)</option>
+                  <option value="morning">Morning (6am - 12pm)</option>
+                  <option value="afternoon">Afternoon (12pm - 6pm)</option>
+                  <option value="evening">Evening (6pm - 10pm)</option>
+                  <option value="night">Night (10pm - 6am)</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Commitment Level: <span className="text-primary-600 font-semibold">{formData.behavior.commitment}/10</span>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={formData.behavior.commitment}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    behavior: { ...formData.behavior, commitment: parseInt(e.target.value) }
-                  })}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
               </div>
             </div>
           )}
@@ -313,7 +314,7 @@ const Onboarding = () => {
 
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-semibold text-gray-900 mb-2">Study Behavior</h3>
-                  <p className="text-gray-700">{formData.behavior.frequencyTarget} sessions/week • {formData.behavior.timeWindow} • Commitment: {formData.behavior.commitment}/10</p>
+                  <p className="text-gray-700">Preferred time: {formData.behavior.timeWindow}</p>
                 </div>
               </div>
             </div>
