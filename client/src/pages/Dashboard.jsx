@@ -316,69 +316,71 @@ const Dashboard = () => {
                   )}
                 </div>
                 {upcomingSessions.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {upcomingSessions.map(session => {
                       const isJoined = joinedSessions.has(session._id) || sessionJoinStatus[session._id] === 'joined';
                       const isLoading = sessionJoinStatus[session._id] === 'loading';
                       const isPast = new Date(session.startTime) < new Date();
                       return (
                         <div key={session._id}
-                          className={`p-3 rounded-xl border transition-all duration-300 ${
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-300 ${
                             isJoined
                               ? 'bg-green-50 border-green-200'
                               : isPast
                               ? 'bg-orange-50 border-orange-200'
                               : 'bg-gray-50 border-gray-200'
                           }`}>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-gray-900 text-sm truncate">{session.groupName}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {new Date(session.startTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
-                                {' · '}
-                                {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                {' · '}{session.durationMinutes} min
-                              </p>
-                            </div>
-                            {isJoined && (
-                              <span className="ml-2 flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full flex-shrink-0">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Attended
-                              </span>
-                            )}
-                            {isPast && !isJoined && (
-                              <span className="ml-2 text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-1 rounded-full flex-shrink-0">In Progress</span>
-                            )}
+                          {/* Left indicator dot */}
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            isJoined ? 'bg-green-500' : isPast ? 'bg-orange-400' : 'bg-primary-500'
+                          }`} />
+
+                          {/* Session info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm truncate">{session.groupName}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(session.startTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                              {' · '}
+                              {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {' · '}{session.durationMinutes} min
+                            </p>
                           </div>
-                          <button
-                            onClick={() => joinSession(session._id)}
-                            disabled={isJoined || isLoading}
-                            className={`mt-2.5 w-full py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2
-                              ${isJoined
-                                ? 'bg-green-500 text-white cursor-default'
-                                : isLoading
-                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                : 'bg-accent-600 text-white hover:bg-accent-700 active:scale-95'
-                              }`}>
-                            {isLoading ? (
-                              <>
-                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                                </svg>
-                                Marking...
-                              </>
-                            ) : isJoined ? (
-                              <>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Attendance Marked
-                              </>
-                            ) : 'Mark Attendance'}
-                          </button>
+
+                          {/* Action — right side */}
+                          {isJoined ? (
+                            <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full flex-shrink-0">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Attended
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => joinSession(session._id)}
+                              disabled={isLoading}
+                              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5
+                                ${isLoading
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-accent-600 text-white hover:bg-accent-700 active:scale-95'
+                                }`}>
+                              {isLoading ? (
+                                <>
+                                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                  </svg>
+                                  Marking
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  {isPast ? 'Mark Attended' : 'Mark'}
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       );
                     })}
