@@ -14,14 +14,21 @@ const SUBJECT_OPTIONS = [
 ];
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
 
 const SKILL_COLORS = {
-  Beginner: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  Intermediate: 'bg-blue-100 text-blue-700 border-blue-200',
-  Advanced: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  Beginner:     { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-400' },
+  Intermediate: { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',     dot: 'bg-blue-400' },
+  Advanced:     { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200',  dot: 'bg-emerald-400' },
 };
 
-const DAY_SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
+const StatCard = ({ label, value, icon, accent }) => (
+  <div className={`flex flex-col items-center justify-center py-3 px-4 rounded-2xl border bg-white shadow-sm min-w-[80px] ${accent}`}>
+    <span className="text-lg mb-0.5">{icon}</span>
+    <p className="text-xl font-extrabold text-gray-900 leading-tight">{value}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+  </div>
+);
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -120,352 +127,399 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-gray-500">Loading profile...</p>
+        <p className="text-gray-500 text-sm">Loading your profile...</p>
       </div>
     </div>
   );
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
-  const TABS = ['info', 'subjects', 'schedule', 'achievements'];
+  const pic = editing ? form.profilePicture : user?.profilePicture;
+  const TABS = [
+    { id: 'info', label: 'Info', emoji: '👤' },
+    { id: 'subjects', label: 'Subjects', emoji: '📚' },
+    { id: 'schedule', label: 'Schedule', emoji: '📅' },
+    { id: 'achievements', label: 'Badges', emoji: '🏅' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f0fdfa 0%, #f0fdf4 50%, #ecfdf5 100%)' }}>
       <Navbar user={user} />
       <canvas ref={canvasRef} className="hidden" />
 
-      <div className="pt-16">
-        {/* ── Cover + Avatar Banner ── */}
-        <div className="relative h-44 bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500">
-          {/* Abstract pattern overlay */}
-          <div className="absolute inset-0 opacity-20"
-            style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      {/* ── COVER BANNER ── */}
+      <div className="relative" style={{ height: '200px' }}>
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 40%, #16a34a 100%)'
+        }} />
+        {/* Decorative circles */}
+        <div className="absolute top-6 right-20 w-32 h-32 rounded-full opacity-10 bg-white" />
+        <div className="absolute top-16 right-8 w-16 h-16 rounded-full opacity-10 bg-white" />
+        <div className="absolute -bottom-4 left-1/3 w-48 h-48 rounded-full opacity-5 bg-white" />
+        <div className="absolute top-4 left-1/4 w-20 h-20 rounded-full opacity-10 bg-white" />
 
-          {/* Edit / Save buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            {!editing ? (
-              <button onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white rounded-xl text-sm font-semibold transition border border-white/30">
-                Edit Profile
+        {/* Action buttons */}
+        <div className="absolute top-5 right-5 flex gap-2 z-10">
+          {!editing ? (
+            <button onClick={() => setEditing(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition"
+              style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Profile
+            </button>
+          ) : (
+            <>
+              <button onClick={() => { initForm(user); setEditing(false); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/80 transition hover:text-white"
+                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                Cancel
               </button>
-            ) : (
-              <>
-                <button onClick={() => { initForm(user); setEditing(false); }}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium border border-white/20 transition">
-                  Cancel
-                </button>
-                <button onClick={handleSave} disabled={saving}
-                  className="px-4 py-2 bg-white text-primary-700 rounded-xl text-sm font-bold hover:bg-primary-50 transition shadow">
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-              </>
-            )}
-          </div>
+              <button onClick={handleSave} disabled={saving}
+                className="px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition hover:scale-105 active:scale-95 disabled:opacity-60"
+                style={{ background: '#fff', color: '#0d9488' }}>
+                {saving ? 'Saving...' : '✓ Save Changes'}
+              </button>
+            </>
+          )}
         </div>
+      </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-20 pb-16 relative z-10">
 
-          {/* ── Avatar + Name Row ── */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
+        {/* ── HEADER CARD ── */}
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 mb-5">
+          <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-                {(editing ? form.profilePicture : user?.profilePicture) ? (
-                  <img src={editing ? form.profilePicture : user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              <div className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #14b8a6, #22c55e)' }}>
+                {pic ? (
+                  <img src={pic} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-white font-bold text-3xl">{initials}</span>
+                  <span className="text-white font-black text-4xl select-none">{initials}</span>
                 )}
               </div>
               {editing && (
-                <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-1">
+                <div className="absolute -bottom-3 left-0 right-0 flex justify-center gap-1">
                   <button onClick={() => fileInputRef.current.click()}
-                    className="px-2 py-0.5 bg-gray-900 text-white text-xs rounded-full hover:bg-gray-700 transition">
-                    Upload
-                  </button>
+                    className="px-2 py-1 text-[10px] font-bold text-white rounded-full shadow"
+                    style={{ background: '#0d9488' }}>📁 Upload</button>
                   <button onClick={startCamera}
-                    className="px-2 py-0.5 bg-gray-900 text-white text-xs rounded-full hover:bg-gray-700 transition">
-                    Camera
-                  </button>
+                    className="px-2 py-1 text-[10px] font-bold text-white rounded-full shadow"
+                    style={{ background: '#16a34a' }}>📷 Camera</button>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 </div>
               )}
             </div>
 
-            {/* Name + info */}
-            <div className="flex-1 pb-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
-                  <p className="text-sm text-gray-500">
-                    {[user?.dept, user?.college, user?.year ? `Year ${user.year}` : null].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
+            {/* Name + details */}
+            <div className="flex-1 min-w-0 mt-2 sm:mt-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-2xl font-black text-gray-900">{user?.name || 'Your Name'}</h1>
                 {user?.cluster?.label && (
-                  <span className="sm:ml-3 inline-flex items-center px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-bold">
+                  <span className="px-3 py-1 text-xs font-bold rounded-full"
+                    style={{ background: 'linear-gradient(90deg,#ccfbf1,#bbf7d0)', color: '#0f766e' }}>
                     {user.cluster.label}
                   </span>
                 )}
               </div>
-            </div>
-
-            {/* Stats pills */}
-            <div className="flex gap-3 sm:pb-1">
-              {[
-                { label: 'Sessions', value: analytics.sessionsThisWeek },
-                { label: 'Attendance', value: `${analytics.attendanceRate}%` },
-                { label: 'Score', value: `${analytics.activityScore}/10` },
-                { label: 'Streak', value: `${user?.streak || 0}d` },
-              ].map(({ label, value }) => (
-                <div key={label} className="text-center bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm min-w-[60px]">
-                  <p className="text-base font-bold text-gray-900">{value}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Bio strip ── */}
-          {(user?.bio || editing) && (
-            <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 mb-5 shadow-sm">
+              <p className="text-sm text-gray-500 mb-3">
+                {[user?.dept, user?.college, user?.year ? `Year ${user.year}` : null].filter(Boolean).join(' · ') || 'Add your college & department'}
+              </p>
+              {/* Bio */}
               {editing ? (
                 <textarea value={form.bio || ''} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-                  rows={2} placeholder="Tell others about yourself — your goals, study style, interests..."
-                  className="w-full text-sm text-gray-700 focus:outline-none resize-none" />
+                  rows={2} placeholder="Write something about yourself — goals, style, interests..."
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none bg-gray-50" />
+              ) : user?.bio ? (
+                <p className="text-sm text-gray-600 line-clamp-2">{user.bio}</p>
               ) : (
-                <p className="text-sm text-gray-700">{user.bio || <span className="text-gray-400 italic">No bio yet.</span>}</p>
+                <p className="text-sm text-gray-400 italic">No bio yet — click Edit Profile to add one.</p>
               )}
             </div>
-          )}
 
-          {/* ── Tabs ── */}
-          <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-5 shadow-sm w-fit">
-            {TABS.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition ${
-                  activeTab === tab
-                    ? 'bg-primary-600 text-white shadow'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-                }`}>
-                {tab === 'achievements' ? '🏅 Badges' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+            {/* Stats */}
+            <div className="flex gap-2 flex-shrink-0 flex-wrap">
+              <StatCard label="Sessions" value={analytics.sessionsThisWeek ?? 0} icon="📖" accent="border-blue-100" />
+              <StatCard label="Attendance" value={`${analytics.attendanceRate ?? 0}%`} icon="✅" accent="border-green-100" />
+              <StatCard label="Streak" value={`${user?.streak || 0}d`} icon="🔥" accent="border-orange-100" />
+            </div>
           </div>
+        </div>
 
-          {/* ── Tab: Info ── */}
-          {activeTab === 'info' && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-5">Personal Information</h2>
+        {/* ── TABS ── */}
+        <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+          {TABS.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all shadow-sm ${
+                activeTab === tab.id
+                  ? 'text-white shadow-md scale-105'
+                  : 'bg-white text-gray-500 hover:text-gray-800 border border-gray-200'
+              }`}
+              style={activeTab === tab.id ? { background: 'linear-gradient(135deg, #0d9488, #16a34a)' } : {}}>
+              <span>{tab.emoji}</span> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB: INFO ── */}
+        {activeTab === 'info' && (
+          <div className="space-y-4">
+
+            {/* Personal Info Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                  style={{ background: 'linear-gradient(135deg,#ccfbf1,#bbf7d0)' }}>👤</span>
+                Personal Information
+              </h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
-                  { label: 'Full Name', key: 'name', type: 'text', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                  { label: 'Email', key: 'email', type: 'email', readOnly: true, icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                  { label: 'College / University', key: 'college', type: 'text', icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z' },
-                  { label: 'Department', key: 'dept', type: 'text', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-                  { label: 'Year of Study', key: 'year', type: 'number', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-                  { label: 'Phone', key: 'phone', type: 'tel', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
-                ].map(({ label, key, type, readOnly, icon }) => (
-                  <div key={key} className={`${key === 'college' ? 'sm:col-span-2' : ''}`}>
-                    <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
-                      </svg>
-                      {label}
-                    </label>
+                  { label: 'Full Name', key: 'name', type: 'text' },
+                  { label: 'Email', key: 'email', type: 'email', readOnly: true },
+                  { label: 'College / University', key: 'college', type: 'text', full: true },
+                  { label: 'Department', key: 'dept', type: 'text' },
+                  { label: 'Year of Study', key: 'year', type: 'number' },
+                  { label: 'Phone', key: 'phone', type: 'tel' },
+                ].map(({ label, key, type, readOnly, full }) => (
+                  <div key={key} className={full ? 'sm:col-span-2' : ''}>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{label}</p>
                     {editing && !readOnly ? (
-                      <input type={type} value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50" />
+                      <input type={type} value={form[key] || ''}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-gray-50 text-gray-800 transition" />
                     ) : (
-                      <p className={`text-sm font-medium px-3 py-2.5 rounded-xl ${readOnly ? 'bg-gray-100 text-gray-500' : 'text-gray-900'}`}>
-                        {user?.[key] || <span className="text-gray-400 italic">Not set</span>}
-                      </p>
+                      <div className={`px-3 py-2.5 rounded-xl text-sm font-semibold ${
+                        readOnly ? 'bg-gray-100 text-gray-500' : 'text-gray-800'
+                      }`}>
+                        {user?.[key] || <span className="text-gray-400 font-normal italic">Not set</span>}
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-
-              {/* Study Pattern */}
-              <div className="mt-6 pt-5 border-t border-gray-100">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Study Pattern</h3>
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl border border-primary-100">
-                  <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-primary-800 text-base">{user?.cluster?.label || 'Not assigned yet'}</p>
-                    <p className="text-xs text-primary-600">Confidence: {user?.cluster?.confidence || 0}%</p>
-                    <div className="w-full bg-primary-200 rounded-full h-1.5 mt-1.5">
-                      <div className="bg-primary-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${user?.cluster?.confidence || 0}%` }} />
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Study Time</p>
-                    <p className="font-semibold text-gray-900 capitalize text-sm">{user?.behavior?.timeWindow || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Study Preferences row */}
-              <div className="mt-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Study Preferences</h3>
-                {editing ? (
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {[
-                      { label: 'Study Mode', key: 'mode', parent: 'preferences', options: [['online','Online'],['offline','Offline'],['hybrid','Hybrid']] },
-                      { label: 'Communication', key: 'communication', parent: 'preferences', options: [['chat','Text Chat'],['voice','Voice'],['both','Both']] },
-                      { label: 'Study Time', key: 'timeWindow', parent: 'behavior', options: [['morning','Morning'],['afternoon','Afternoon'],['evening','Evening'],['night','Night']] },
-                    ].map(({ label, key, parent, options }) => (
-                      <div key={key}>
-                        <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
-                        <select value={form[parent]?.[key] || ''} onChange={e => setForm(f => ({ ...f, [parent]: { ...f[parent], [key]: e.target.value } }))}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 bg-gray-50">
-                          {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                        </select>
-                      </div>
-                    ))}
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Group Size</p>
-                      <input type="number" min={2} max={8} value={form.preferences?.groupSize || 4}
-                        onChange={e => setForm(f => ({ ...f, preferences: { ...f.preferences, groupSize: parseInt(e.target.value) } }))}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 bg-gray-50" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { label: 'Mode', value: user?.preferences?.mode, icon: '🖥' },
-                      { label: 'Communication', value: user?.preferences?.communication, icon: '💬' },
-                      { label: 'Group Size', value: user?.preferences?.groupSize ? `${user.preferences.groupSize} people` : null, icon: '👥' },
-                      { label: 'Study Time', value: user?.behavior?.timeWindow, icon: '🕐' },
-                    ].map(({ label, value, icon }) => (
-                      <div key={label} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <p className="text-xs text-gray-400 mb-1">{icon} {label}</p>
-                        <p className="font-semibold text-gray-800 capitalize text-sm">{value || <span className="text-gray-400">—</span>}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
-          )}
 
-          {/* ── Tab: Subjects ── */}
-          {activeTab === 'subjects' && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-5">Subjects & Skills</h2>
-              {editing ? (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    {SUBJECT_OPTIONS.map(sub => (
-                      <button key={sub} onClick={() => toggleSubject(sub)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                          form.subjects.find(s => s.name === sub)
-                            ? 'bg-primary-600 text-white border-primary-600'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-primary-300'
-                        }`}>
-                        {sub}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input type="text" value={customSubject} onChange={e => setCustomSubject(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && addCustomSubject()}
-                      placeholder="Add custom subject..."
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500" />
-                    <button onClick={addCustomSubject} className="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700">+ Add</button>
-                  </div>
-                  <div className="space-y-2 mt-2">
-                    {form.subjects.map(sub => (
-                      <div key={sub.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <span className="text-sm font-semibold text-gray-900">{sub.name}</span>
-                        <div className="flex items-center gap-2">
-                          <select value={sub.skill} onChange={e => setForm(f => ({ ...f, subjects: f.subjects.map(s => s.name === sub.name ? { ...s, skill: e.target.value } : s) }))}
-                            className="px-2 py-1 border border-gray-200 rounded-lg text-sm bg-white">
-                            <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
-                          </select>
-                          <button onClick={() => toggleSubject(sub.name)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition text-lg">×</button>
-                        </div>
-                      </div>
-                    ))}
+            {/* Study Pattern */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                  style={{ background: 'linear-gradient(135deg,#ede9fe,#ddd6fe)' }}>🧠</span>
+                Study Pattern & Behavior
+              </h2>
+              <div className="flex items-center gap-4 p-4 rounded-2xl mb-4"
+                style={{ background: 'linear-gradient(135deg, #f0fdfa, #f0fdf4)' }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow"
+                  style={{ background: 'linear-gradient(135deg, #0d9488, #16a34a)' }}>🧩</div>
+                <div className="flex-1">
+                  <p className="font-black text-gray-900 text-lg leading-tight">{user?.cluster?.label || 'Not assigned'}</p>
+                  <p className="text-xs text-gray-500 mb-2">Confidence: {user?.cluster?.confidence || 0}%</p>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="h-2 rounded-full transition-all duration-700"
+                      style={{ width: `${user?.cluster?.confidence || 0}%`, background: 'linear-gradient(90deg,#0d9488,#16a34a)' }} />
                   </div>
                 </div>
-              ) : user?.subjects?.length > 0 ? (
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs text-gray-400">Preferred Time</p>
+                  <p className="font-bold text-gray-800 capitalize text-sm mt-0.5">{user?.behavior?.timeWindow || '—'}</p>
+                </div>
+              </div>
+
+              {/* Preferences grid */}
+              {editing ? (
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {user.subjects.map((s, i) => (
-                    <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${SKILL_COLORS[s.skill] || 'bg-gray-50 border-gray-200 text-gray-700'}`}>
-                      <span className="font-semibold text-sm">{s.name}</span>
-                      <span className="text-xs font-bold opacity-80 bg-white/60 px-2 py-0.5 rounded-full">{s.skill}</span>
+                  {[
+                    { label: 'Study Mode', key: 'mode', parent: 'preferences', options: [['online','Online'],['offline','Offline'],['hybrid','Hybrid']] },
+                    { label: 'Communication', key: 'communication', parent: 'preferences', options: [['chat','Text Chat'],['voice','Voice'],['both','Both']] },
+                    { label: 'Study Time', key: 'timeWindow', parent: 'behavior', options: [['morning','Morning'],['afternoon','Afternoon'],['evening','Evening'],['night','Night']] },
+                  ].map(({ label, key, parent, options }) => (
+                    <div key={key}>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{label}</p>
+                      <select value={form[parent]?.[key] || ''} onChange={e => setForm(f => ({ ...f, [parent]: { ...f[parent], [key]: e.target.value } }))}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 bg-gray-50">
+                        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Group Size</p>
+                    <input type="number" min={2} max={8} value={form.preferences?.groupSize || 4}
+                      onChange={e => setForm(f => ({ ...f, preferences: { ...f.preferences, groupSize: parseInt(e.target.value) } }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 bg-gray-50" />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Study Mode', value: user?.preferences?.mode, color: 'from-blue-50 to-blue-100', text: 'text-blue-700', icon: '🖥' },
+                    { label: 'Communication', value: user?.preferences?.communication, color: 'from-purple-50 to-purple-100', text: 'text-purple-700', icon: '💬' },
+                    { label: 'Group Size', value: user?.preferences?.groupSize ? `${user.preferences.groupSize} people` : null, color: 'from-pink-50 to-pink-100', text: 'text-pink-700', icon: '👥' },
+                    { label: 'Study Time', value: user?.behavior?.timeWindow, color: 'from-amber-50 to-amber-100', text: 'text-amber-700', icon: '⏰' },
+                  ].map(({ label, value, color, text, icon }) => (
+                    <div key={label} className={`bg-gradient-to-br ${color} rounded-xl p-3 border border-white`}>
+                      <p className="text-xs text-gray-500 mb-1">{icon} {label}</p>
+                      <p className={`font-bold capitalize text-sm ${text}`}>{value || '—'}</p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-gray-400 text-sm">No subjects added yet. Click Edit Profile to add your subjects.</p>
-                </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ── Tab: Schedule ── */}
-          {activeTab === 'schedule' && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-5">Weekly Availability</h2>
-              {editing ? (
-                <div className="grid grid-cols-7 gap-2">
-                  {DAYS.map(day => {
-                    const isSelected = form.availability?.some(a => a.day === day);
+        {/* ── TAB: SUBJECTS ── */}
+        {activeTab === 'subjects' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                style={{ background: 'linear-gradient(135deg,#dbeafe,#bfdbfe)' }}>📚</span>
+              Subjects & Skills
+            </h2>
+            {editing ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {SUBJECT_OPTIONS.map(sub => {
+                    const selected = !!form.subjects.find(s => s.name === sub);
                     return (
-                      <button key={day} onClick={() => toggleDay(day)}
-                        className={`flex flex-col items-center py-3 px-1 rounded-xl border-2 transition font-semibold text-sm ${
-                          isSelected
-                            ? 'bg-primary-600 border-primary-600 text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600'
-                        }`}>
-                        <span>{DAY_SHORT[day]}</span>
+                      <button key={sub} onClick={() => toggleSubject(sub)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                          selected
+                            ? 'border-transparent text-white scale-105 shadow'
+                            : 'border-gray-200 text-gray-600 bg-gray-50 hover:border-primary-300'
+                        }`}
+                        style={selected ? { background: 'linear-gradient(135deg,#0d9488,#16a34a)' } : {}}>
+                        {sub}
                       </button>
                     );
                   })}
                 </div>
-              ) : user?.availability?.length > 0 ? (
-                <div className="grid grid-cols-7 gap-2">
-                  {DAYS.map(day => {
-                    const isAvailable = user.availability.some(a => a.day === day);
-                    return (
-                      <div key={day} className={`flex flex-col items-center py-3 px-1 rounded-xl border-2 text-sm font-semibold ${
-                        isAvailable ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-100 text-gray-300'
-                      }`}>
-                        {DAY_SHORT[day]}
+                <div className="flex gap-2">
+                  <input type="text" value={customSubject} onChange={e => setCustomSubject(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addCustomSubject()}
+                    placeholder="Add a custom subject..."
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400" />
+                  <button onClick={addCustomSubject}
+                    className="px-4 py-2 text-white text-sm font-bold rounded-xl"
+                    style={{ background: 'linear-gradient(135deg,#0d9488,#16a34a)' }}>+ Add</button>
+                </div>
+                <div className="space-y-2">
+                  {form.subjects.map(sub => (
+                    <div key={sub.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <span className="text-sm font-semibold text-gray-900">{sub.name}</span>
+                      <div className="flex items-center gap-2">
+                        <select value={sub.skill}
+                          onChange={e => setForm(f => ({ ...f, subjects: f.subjects.map(s => s.name === sub.name ? { ...s, skill: e.target.value } : s) }))}
+                          className="px-2 py-1 border border-gray-200 rounded-lg text-sm bg-white">
+                          <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+                        </select>
+                        <button onClick={() => toggleSubject(sub.name)}
+                          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition text-xl">×</button>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-gray-400 text-sm">No availability set. Click Edit Profile to set your schedule.</p>
-                </div>
-              )}
+              </div>
+            ) : user?.subjects?.length > 0 ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {user.subjects.map((s, i) => {
+                  const c = SKILL_COLORS[s.skill] || SKILL_COLORS.Intermediate;
+                  return (
+                    <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${c.bg} ${c.border}`}>
+                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${c.dot}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-bold text-sm ${c.text} truncate`}>{s.name}</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-white/70 ${c.text}`}>{s.skill}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-5xl mb-3">📚</p>
+                <p className="text-gray-500 font-semibold">No subjects added yet</p>
+                <p className="text-sm text-gray-400 mt-1">Click Edit Profile to add your subjects and skill levels</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB: SCHEDULE ── */}
+        {activeTab === 'schedule' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                style={{ background: 'linear-gradient(135deg,#fef3c7,#fde68a)' }}>📅</span>
+              Weekly Availability
+            </h2>
+            <div className="grid grid-cols-7 gap-2 mb-6">
+              {DAYS.map(day => {
+                const isAvailable = (editing ? form.availability : user?.availability)?.some(a => a.day === day);
+                return (
+                  <button key={day}
+                    onClick={editing ? () => toggleDay(day) : undefined}
+                    disabled={!editing}
+                    className={`flex flex-col items-center py-4 rounded-2xl border-2 transition-all font-bold text-sm
+                      ${isAvailable
+                        ? 'text-white shadow-md scale-105'
+                        : 'border-gray-100 text-gray-300 bg-gray-50'
+                      } ${editing ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`}
+                    style={isAvailable ? { background: 'linear-gradient(135deg,#0d9488,#16a34a)', borderColor: 'transparent' } : {}}>
+                    {DAY_SHORT[day]}
+                  </button>
+                );
+              })}
             </div>
-          )}
+            {/* Availability list */}
+            {(editing ? form.availability : user?.availability)?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Available time slots</p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {(editing ? form.availability : user.availability).map((a, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3 rounded-xl"
+                      style={{ background: 'linear-gradient(135deg,#f0fdfa,#f0fdf4)', border: '1px solid #d1fae5' }}>
+                      <span className="font-semibold text-sm text-emerald-700">{a.day}</span>
+                      {(a.startTime || a.endTime) && (
+                        <span className="text-xs font-medium text-emerald-600 bg-white px-2 py-1 rounded-full">
+                          {a.startTime} – {a.endTime}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!user?.availability?.length && !editing && (
+              <div className="text-center py-8">
+                <p className="text-5xl mb-3">📅</p>
+                <p className="text-gray-500 font-semibold">No availability set</p>
+                <p className="text-sm text-gray-400 mt-1">Click Edit Profile to set your weekly schedule</p>
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* ── Tab: Achievements ── */}
-          {activeTab === 'achievements' && (
-            <Achievements user={user} leaderboard={[]} rank={0} />
-          )}
+        {/* ── TAB: ACHIEVEMENTS ── */}
+        {activeTab === 'achievements' && (
+          <Achievements user={user} leaderboard={[]} rank={0} />
+        )}
 
-        </div>
       </div>
 
       {/* Camera Modal */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Take a Photo</h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">📷 Take a Photo</h3>
             <video ref={videoRef} autoPlay playsInline className="w-full rounded-xl mb-4 bg-black" />
             <div className="flex gap-3">
-              <button onClick={capturePhoto} className="flex-1 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold transition">Capture</button>
+              <button onClick={capturePhoto}
+                className="flex-1 py-2.5 text-white rounded-xl font-bold transition hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg,#0d9488,#16a34a)' }}>Capture</button>
               <button onClick={() => { streamRef.current?.getTracks().forEach(t => t.stop()); setShowCamera(false); }}
-                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition">Cancel</button>
+                className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50">Cancel</button>
             </div>
           </div>
         </div>
