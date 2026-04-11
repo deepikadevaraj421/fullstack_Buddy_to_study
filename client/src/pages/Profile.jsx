@@ -31,10 +31,8 @@ const Profile = () => {
   const loadUser = async () => {
     try {
       const res = await api.get('/auth/me');
-      // fetch full profile
-      const full = await api.get(`/users/${res.data.id}`);
-      setUser(full.data);
-      initForm(full.data);
+      setUser(res.data);
+      initForm(res.data);
     } catch (err) {
       if (err.response?.status === 401) { localStorage.removeItem('token'); navigate('/login'); }
     } finally { setLoading(false); }

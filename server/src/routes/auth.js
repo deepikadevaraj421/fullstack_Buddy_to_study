@@ -87,7 +87,17 @@ router.get('/me', auth, async (req, res) => {
     name: req.user.name,
     email: req.user.email,
     onboardingComplete: req.user.onboardingComplete,
-    cluster: req.user.cluster
+    cluster: req.user.cluster,
+    profilePicture: req.user.profilePicture,
+    college: req.user.college,
+    dept: req.user.dept,
+    year: req.user.year,
+    phone: req.user.phone,
+    bio: req.user.bio,
+    subjects: req.user.subjects,
+    availability: req.user.availability,
+    preferences: req.user.preferences,
+    behavior: req.user.behavior
   });
 });
 

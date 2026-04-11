@@ -148,10 +148,14 @@ const Navbar = ({ user }) => {
               to="/app/profile"
               className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
             >
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                <span className="text-primary-700 font-semibold text-sm">
-                  {user?.name?.charAt(0) || 'U'}
-                </span>
+              <div className="w-8 h-8 bg-primary-100 rounded-full overflow-hidden flex items-center justify-center">
+                {user?.profilePicture ? (
+                  <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-primary-700 font-semibold text-sm">
+                    {user?.name?.charAt(0) || 'U'}
+                  </span>
+                )}
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700">
                 {user?.name || 'User'}
