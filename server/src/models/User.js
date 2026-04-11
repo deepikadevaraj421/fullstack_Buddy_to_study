@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema({
   phone: String,
   bio: String,
   profilePicture: String,
+  streak: { type: Number, default: 0 },
+  longestStreak: { type: Number, default: 0 },
+  lastActiveDate: { type: Date },
   onboardingComplete: { type: Boolean, default: false },
   subjects: [{
     name: String,

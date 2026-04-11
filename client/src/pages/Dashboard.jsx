@@ -197,6 +197,7 @@ const Dashboard = () => {
   const joinSession = async (sessionId) => {
     try {
       await api.post(`/sessions/${sessionId}/join`);
+      if (user?.id) await api.post(`/analytics/streak/${user.id}`);
       alert('Attendance marked!');
       loadUpcomingSessions();
     } catch (err) {
@@ -254,7 +255,7 @@ const Dashboard = () => {
           </div>
 
           {/* Personal Analytics */}
-          <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-sm font-medium text-gray-600 mb-1">Sessions This Week</h3>
               <p className="text-3xl font-bold text-gray-900">{analytics.sessionsThisWeek}</p>
@@ -266,6 +267,11 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-sm font-medium text-gray-600 mb-1">Activity Score</h3>
               <p className="text-3xl font-bold text-primary-600">{analytics.activityScore}/10</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Study Streak</h3>
+              <p className="text-3xl font-bold text-orange-500">{user?.streak || 0} days</p>
+              <p className="text-xs text-gray-400 mt-1">Best: {user?.longestStreak || 0} days</p>
             </div>
           </div>
 

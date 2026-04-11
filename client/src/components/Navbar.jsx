@@ -113,6 +113,16 @@ const Navbar = ({ user }) => {
               >
                 Groups
               </Link>
+              <Link
+                to="/app/analytics"
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  isActive('/app/analytics')
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Analytics
+              </Link>
               {user?.role === 'admin' && (
                 <Link
                   to="/app/admin"

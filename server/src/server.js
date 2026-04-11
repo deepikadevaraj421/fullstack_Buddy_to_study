@@ -12,6 +12,7 @@ import sessionRoutes from './routes/sessions.js';
 import inviteRoutes from './routes/invites.js';
 import notificationRoutes from './routes/notifications.js';
 import messageRoutes from './routes/messages.js';
+import analyticsRoutes from './routes/analytics.js';
 
 dotenv.config();
 
@@ -69,6 +70,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/invites', inviteRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api', messageRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });

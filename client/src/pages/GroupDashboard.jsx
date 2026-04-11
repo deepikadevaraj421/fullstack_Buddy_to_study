@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Avatar from '../components/Avatar';
 import CommunicationTab from '../components/CommunicationTab';
+import GroupAnalytics from '../components/GroupAnalytics';
 import InviteMembersModal from '../components/InviteMembersModal';
 import api from '../utils/api';
 
@@ -389,31 +390,7 @@ const GroupDashboard = () => {
               )}
 
               {activeTab === 'progress' && (
-                <div className="space-y-6">
-                  <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">Weekly Health History</h3>
-                    <div className="space-y-3">
-                      {group.weeklyHealthHistory && group.weeklyHealthHistory.length > 0 ? (
-                        group.weeklyHealthHistory.slice(-3).reverse().map((health, i) => (
-                          <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium text-gray-900">
-                              {new Date(health.weekStart).toLocaleDateString()}
-                            </span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                              health.status === 'Healthy' ? 'bg-green-100 text-green-700' :
-                              health.status === 'Warning' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              {health.status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-600 text-center py-4">No health history available yet.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <GroupAnalytics groupId={id} />
               )}
 
               {activeTab === 'communication' && (

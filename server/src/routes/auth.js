@@ -97,7 +97,9 @@ router.get('/me', auth, async (req, res) => {
     subjects: req.user.subjects,
     availability: req.user.availability,
     preferences: req.user.preferences,
-    behavior: req.user.behavior
+    behavior: req.user.behavior,
+    streak: req.user.streak || 0,
+    longestStreak: req.user.longestStreak || 0
   });
 });
 
