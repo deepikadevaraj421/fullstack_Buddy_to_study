@@ -125,11 +125,14 @@ const Analytics = () => {
     </div>
   );
 
-  const clusterData = platform?.clusterDist
-    ? Object.entries(platform.clusterDist).map(([label, value]) => ({ label: label.split(' ')[0], value }))
+  const clusterData = user?.cluster?.label
+    ? [{ label: user.cluster.label, value: user.cluster.confidence || 80 }]
     : [];
 
-  const subjectData = platform?.topSubjects?.map(s => ({ label: s.name.length > 8 ? s.name.slice(0, 7) + '.' : s.name, value: s.count })) || [];
+  const subjectData = user?.subjects?.map(s => ({
+    label: s.name.length > 8 ? s.name.slice(0, 7) + '.' : s.name,
+    value: s.skill === 'Advanced' ? 3 : s.skill === 'Intermediate' ? 2 : 1
+  })) || [];
 
   const myRank = leaderboard.findIndex(s => s._id?.toString() === user?.id?.toString()) + 1;
   const myStats = leaderboard.find(s => s._id?.toString() === user?.id?.toString());
@@ -185,14 +188,36 @@ const Analytics = () => {
 
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Study Behavior Distribution</h2>
-              <DonutChart data={clusterData} />
+              <h2 className="text-lg font-bold text-gray-900 mb-2">My Study Pattern</h2>
+              <p className="text-sm text-gray-500 mb-4">{user?.cluster?.label || 'Not assigned'} — {user?.cluster?.confidence || 0}% confidence</p>
+              <div className="p-4 bg-purple-50 rounded-xl">
+                <p className="text-2xl font-bold text-purple-700">{user?.cluster?.label || 'Not assigned'}</p>
+                <p className="text-sm text-purple-500 mt-1">Confidence: {user?.cluster?.confidence || 0}%</p>
+                <div className="mt-3 w-full bg-purple-200 rounded-full h-3">
+                  <div className="bg-purple-600 h-3 rounded-full" style={{ width: `${user?.cluster?.confidence || 0}%` }} />
+                </div>
+              </div>
             </div>
 
-            {/* Subject Popularity */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Most Popular Subjects</h2>
-              <BarChart data={subjectData} color="#6366f1" />
+              <h2 className="text-lg font-bold text-gray-900 mb-4">My Subjects & Skill Levels</h2>
+              {user?.subjects?.length > 0 ? (
+                <div className="space-y-3">
+                  {user.subjects.map((s, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium text-gray-800">{s.name}</span>
+                        <span className="text-gray-500">{s.skill}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 rounded-full bg-primary-500" style={{ width: s.skill === 'Advanced' ? '100%' : s.skill === 'Intermediate' ? '60%' : '30%' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">No subjects added yet</p>
+              )}
             </div>
           </div>
 

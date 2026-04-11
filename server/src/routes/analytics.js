@@ -6,6 +6,7 @@ import Task from '../models/Task.js';
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
+const skillToNum = (s) => ({ beginner: 1, intermediate: 2, advanced: 3 }[s?.toLowerCase()] ?? 2);
 
 // Personal analytics stats for current user
 router.get('/platform', auth, async (req, res) => {
@@ -28,23 +29,20 @@ router.get('/platform', auth, async (req, res) => {
       if (m.toString() !== userId.toString()) partnerSet.add(m.toString());
     }));
 
-    // Cluster distribution across all users (for the donut chart)
-    const allUsers = await User.find({ onboardingComplete: true }).select('cluster subjects');
+    // My cluster (single value)
     const clusterDist = {};
-    allUsers.forEach(u => {
-      const label = u.cluster?.label || 'Unassigned';
-      clusterDist[label] = (clusterDist[label] || 0) + 1;
-    });
+    if (req.user.cluster?.label) {
+      clusterDist[req.user.cluster.label] = 1;
+    }
 
-    // Subject popularity
+    // My subjects only
     const subjectCount = {};
-    allUsers.forEach(u => u.subjects?.forEach(s => {
-      subjectCount[s.name] = (subjectCount[s.name] || 0) + 1;
-    }));
+    req.user.subjects?.forEach(s => {
+      subjectCount[s.name] = skillToNum(s.skill);
+    });
     const topSubjects = Object.entries(subjectCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ name, count }));
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
 
     res.json({
       totalUsers: myGroups.length,           // my active groups
