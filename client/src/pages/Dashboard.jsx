@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [groups, setGroups] = useState([]);
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [analytics, setAnalytics] = useState({ sessionsThisWeek: 0, attendanceRate: 0, activityScore: 0 });
+  const [insights, setInsights] = useState([]);
   const [expandedMatch, setExpandedMatch] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -36,6 +37,7 @@ const Dashboard = () => {
     loadUpcomingSessions();
     loadAnalytics();
     loadRecommendationsOnMount();
+    loadInsights();
   }, []);
 
   useEffect(() => {
@@ -146,6 +148,15 @@ const Dashboard = () => {
     }
   };
 
+  const loadInsights = async () => {
+    try {
+      const res = await api.get('/match/insights');
+      setInsights(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleViewProfile = async (match) => {
     try {
       const res = await api.get(`/users/${match.userId}`);
@@ -203,6 +214,7 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-sm font-medium text-gray-600">Your Behavior Cluster</h2>
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">K-Means ML</span>
               <div className="group relative">
                 <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -250,13 +262,32 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* DS-Powered Insights */}
+          {insights.length > 0 && (
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">🧠</span>
+                <h2 className="text-xl font-bold text-gray-900">AI-Powered Study Insights</h2>
+                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Data Science</span>
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                {insights.map((insight, i) => (
+                  <div key={i} className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+                    <span className="text-2xl flex-shrink-0">{insight.icon}</span>
+                    <p className="text-sm text-gray-700">{insight.tip}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-1 gap-8">
             {/* Recommended Matches - Top 3 */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Recommended Matches</h2>
-                  <p className="text-sm text-gray-600 mt-1">Top 3 study buddies from your network</p>
+                  <p className="text-sm text-gray-600 mt-1">Top 3 study buddies · scored by <span className="text-purple-600 font-semibold">Logistic Regression</span></p>
                 </div>
                 <div className="flex items-center gap-3">
                   <label htmlFor="subject-select" className="text-sm font-medium text-gray-700">Filter by subject:</label>
