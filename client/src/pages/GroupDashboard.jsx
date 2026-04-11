@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Avatar from '../components/Avatar';
 import CommunicationTab from '../components/CommunicationTab';
 import InviteMembersModal from '../components/InviteMembersModal';
 import api from '../utils/api';
@@ -214,12 +215,9 @@ const GroupDashboard = () => {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {group.members.map((member, i) => (
-                  <div key={member._id} className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-700 font-semibold text-xs">{member.name.charAt(0)}</span>
-                    </div>
-                    {i < group.members.length - 1 && <span className="text-gray-400">,</span>}
+                {group.members.map((member) => (
+                  <div key={member._id} title={member.name}>
+                    <Avatar user={member} size="sm" />
                   </div>
                 ))}
               </div>

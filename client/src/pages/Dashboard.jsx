@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Avatar from '../components/Avatar';
 import InviteModal from '../components/InviteModal';
 import api from '../utils/api';
 
@@ -310,11 +311,7 @@ const Dashboard = () => {
                       <div className="flex items-start gap-4">
                         {/* Identity Block */}
                         <div className="flex-shrink-0">
-                          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">
-                              {match.name.charAt(0)}
-                            </span>
-                          </div>
+                          <Avatar user={{ name: match.name, profilePicture: match.profilePicture }} size="lg" />
                         </div>
 
                         {/* Compatibility Details */}
@@ -395,11 +392,7 @@ const Dashboard = () => {
                   {allMatches.map((match) => (
                     <div key={match.userId} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition cursor-pointer" onClick={() => handleViewProfile(match)}>
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                          <span className="text-primary-700 font-semibold">
-                            {match.name.charAt(0)}
-                          </span>
-                        </div>
+                        <Avatar user={{ name: match.name, profilePicture: match.profilePicture }} size="md" />
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900">{match.name}</h3>
                           <p className="text-xs text-gray-600">{match.clusterLabel}</p>
@@ -455,9 +448,7 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl">{selectedProfile.name.charAt(0)}</span>
-                </div>
+                <Avatar user={selectedProfile} size="xl" />
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">{selectedProfile.name}</h3>
                   <p className="text-gray-600">{selectedProfile.email}</p>

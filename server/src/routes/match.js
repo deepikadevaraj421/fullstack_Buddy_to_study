@@ -13,6 +13,7 @@ router.get('/recommendations', auth, async (req, res) => {
     res.json(matches.map(m => ({
       userId: m.user._id,
       name: m.user.name,
+      profilePicture: m.user.profilePicture || '',
       subject: subject || m.subject || 'General',
       skillLevel: m.skillLevel,
       overlapPct: m.overlapPct,
