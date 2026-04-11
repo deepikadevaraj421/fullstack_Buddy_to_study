@@ -161,6 +161,12 @@ const Dashboard = () => {
 
   const handleViewProfile = async (match) => {
     try {
+      // For dummy users just show what we have
+      if (match.userId?.toString().startsWith('d')) {
+        setSelectedProfile({ _id: match.userId, name: match.name, profilePicture: match.profilePicture, cluster: { label: match.clusterLabel }, subjects: [{ name: match.subject, skill: match.skillLevel }] });
+        setShowProfileModal(true);
+        return;
+      }
       const res = await api.get(`/users/${match.userId}`);
       setSelectedProfile(res.data);
       setShowProfileModal(true);
@@ -446,33 +452,103 @@ const Dashboard = () => {
       {/* Profile Modal */}
       {showProfileModal && selectedProfile && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between mb-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            
+            {/* Header */}
+            <div className="relative bg-gradient-to-r from-primary-500 to-accent-500 rounded-t-2xl p-6">
+              <button onClick={() => setShowProfileModal(false)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="flex items-center gap-4">
-                <Avatar user={selectedProfile} size="xl" />
+                <Avatar user={selectedProfile} size="2xl" />
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{selectedProfile.name}</h3>
-                  <p className="text-gray-600">{selectedProfile.email}</p>
+                  <h3 className="text-2xl font-bold text-white">{selectedProfile.name}</h3>
+                  {selectedProfile.college && <p className="text-white/80 text-sm">{selectedProfile.college}</p>}
+                  {selectedProfile.dept && <p className="text-white/70 text-sm">{selectedProfile.dept}{selectedProfile.year ? ` • Year ${selectedProfile.year}` : ''}</p>}
                 </div>
               </div>
-              <button onClick={() => setShowProfileModal(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
             </div>
-            <div className="space-y-6">
+
+            <div className="p-6 space-y-5">
+
+              {/* Bio */}
+              {selectedProfile.bio && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-700 italic">"{selectedProfile.bio}"</p>
+                </div>
+              )}
+
+              {/* Study Pattern */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-600 mb-2">Behavior Cluster</h4>
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">{selectedProfile.cluster?.label || 'Not assigned'}</span>
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Study Pattern</h4>
+                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                  <span className="text-2xl">🧠</span>
+                  <div>
+                    <p className="font-semibold text-purple-800">{selectedProfile.cluster?.label || 'Not assigned'}</p>
+                    <p className="text-xs text-purple-600">Confidence: {selectedProfile.cluster?.confidence || 0}%</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Subjects */}
+              {selectedProfile.subjects?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Subjects & Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProfile.subjects.map((sub, i) => (
+                      <span key={i} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                        {sub.name} — {sub.skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Availability */}
+              {selectedProfile.availability?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Available Days</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProfile.availability.map((a, i) => (
+                      <span key={i} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        {a.day}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Preferences */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-600 mb-2">Subjects & Skills</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProfile.subjects?.map((sub, i) => (
-                    <span key={i} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">{sub.name} - {sub.skill}</span>
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Preferences</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Study Mode', value: selectedProfile.preferences?.mode },
+                    { label: 'Communication', value: selectedProfile.preferences?.communication },
+                    { label: 'Group Size', value: selectedProfile.preferences?.groupSize ? `${selectedProfile.preferences.groupSize} members` : null },
+                    { label: 'Study Time', value: selectedProfile.behavior?.timeWindow },
+                  ].filter(p => p.value).map(({ label, value }) => (
+                    <div key={label} className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500">{label}</p>
+                      <p className="font-medium text-gray-800 capitalize text-sm">{value}</p>
+                    </div>
                   ))}
                 </div>
               </div>
-              <button onClick={() => { handleInvite({ userId: selectedProfile._id, name: selectedProfile.name }); setShowProfileModal(false); }} className="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold">Send Invite</button>
+
+              {/* Invite Button */}
+              <button
+                onClick={() => {
+                  setShowProfileModal(false);
+                  handleInvite({ userId: selectedProfile._id, name: selectedProfile.name, profilePicture: selectedProfile.profilePicture });
+                }}
+                className="w-full py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold text-base"
+              >
+                Invite to Study Group
+              </button>
             </div>
           </div>
         </div>
