@@ -38,7 +38,7 @@ const ScoreBadge = ({ score }) => {
   const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Low';
   return (
     <div className="flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full ${color} flex items-center justify-center shadow`}>
+      <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shadow`}>
         <span className="text-white font-bold text-base">{score}</span>
       </div>
       <span className="text-sm text-gray-500 mt-1 font-medium">{label}</span>
@@ -191,16 +191,16 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
 
-      <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="pt-16 pb-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
 
           {/* ── Hero Banner ── */}
-          <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 rounded-2xl p-6 mb-8 text-white shadow-lg">
-            <div className="flex items-center gap-5">
+          <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 rounded-2xl p-4 mb-4 text-white shadow-lg">
+            <div className="flex items-center gap-3">
               <Avatar user={user} size="2xl" className="ring-4 ring-white/30" />
               <div className="flex-1">
                 <p className="text-white/70 text-sm font-medium">Welcome back</p>
-                <h1 className="text-2xl font-bold">{user?.name || 'Student'}</h1>
+                <h1 className="text-sm font-bold">{user?.name || 'Student'}</h1>
                 {user?.college && <p className="text-white/80 text-sm mt-0.5">{user.college}{user.dept ? ` · ${user.dept}` : ''}</p>}
                 <div className="flex items-center gap-2 mt-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white`}>
@@ -227,7 +227,7 @@ const Dashboard = () => {
           </div>
 
           {/* ── Stats Row ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {[
               { label: 'Sessions This Week', value: analytics.sessionsThisWeek, icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
               { label: 'Attendance Rate', value: `${analytics.attendanceRate}%`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -238,20 +238,20 @@ const Dashboard = () => {
                 <svg className="w-4 h-4 mb-1.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
                 </svg>
-                <p className="text-xl font-bold text-gray-900">{value}</p>
+                <p className="text-sm font-bold text-gray-900">{value}</p>
                 <p className="text-sm text-gray-500 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
 
           {/* ── Main Grid ── */}
-          <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid lg:grid-cols-3 gap-3 mb-3">
 
             {/* Recommended Matches — 2/3 width */}
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Recommended Matches</h2>
+                  <h2 className="text-sm font-bold text-gray-900">Recommended Matches</h2>
                   <p className="text-sm text-gray-500 mt-1">Top study buddies matched for you</p>
                 </div>
                 <select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)}
@@ -308,7 +308,7 @@ const Dashboard = () => {
               {/* Upcoming Sessions */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">Upcoming Sessions</h2>
+                  <h2 className="text-sm font-bold text-gray-900">Upcoming Sessions</h2>
                   {upcomingSessions.length > 0 && (
                     <span className="text-xs bg-primary-50 text-primary-700 font-semibold px-2 py-1 rounded-full">
                       {upcomingSessions.length}
@@ -400,7 +400,7 @@ const Dashboard = () => {
 
               {/* Study Insights */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Study Insights</h2>
+                <h2 className="text-sm font-bold text-gray-900 mb-4">Study Insights</h2>
                 {insights.length > 0 ? (
                   <div className="space-y-3">
                     {insights.map((insight, i) => (
@@ -423,14 +423,14 @@ const Dashboard = () => {
           </div>
 
           {/* ── Achievements ── */}
-          <div className="mb-6">
+          <div className="mb-3">
             <Achievements user={user} leaderboard={[]} rank={0} />
           </div>
 
           {/* ── All Matches ── */}
           {allMatches.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-5">All Study Matches</h2>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">All Study Matches</h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {allMatches.map(match => (
                   <div key={match.userId}
@@ -466,7 +466,7 @@ const Dashboard = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-y-auto">
 
             {/* Header */}
-            <div className="bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 rounded-t-2xl p-6 relative">
+            <div className="bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 rounded-t-2xl p-4 relative">
               <button onClick={() => setShowProfileModal(false)}
                 className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-full transition">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -476,7 +476,7 @@ const Dashboard = () => {
               <div className="flex items-center gap-4">
                 <Avatar user={selectedProfile} size="xl" className="ring-4 ring-white/30" />
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white">{selectedProfile.name}</h3>
+                  <h3 className="text-sm font-bold text-white">{selectedProfile.name}</h3>
                   {selectedProfile.email && <p className="text-white/70 text-sm mt-0.5">{selectedProfile.email}</p>}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selectedProfile.college && <span className="px-2 py-0.5 bg-white/20 text-white text-xs rounded-full">{selectedProfile.college}</span>}

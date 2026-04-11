@@ -69,16 +69,16 @@ const Navbar = ({ user }) => {
 
   return (
     <nav className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
 
           {/* Logo */}
           <div className="flex items-center gap-6">
             <Link to="/app" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">B</span>
+              <div className="w-9 h-7 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="font-bold text-gray-900 text-lg hidden sm:block">Buddy<span className="text-primary-600">Study</span></span>
+              <span className="font-bold text-gray-900 text-sm hidden sm:block">Buddy<span className="text-primary-600">Study</span></span>
             </Link>
 
             {/* Desktop Nav */}
@@ -138,8 +138,8 @@ const Navbar = ({ user }) => {
                       {searchResults.map(u => (
                         <div key={u._id}
                           onClick={() => { setSearchOpen(false); setSearchQuery(''); navigate('/app'); }}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center flex-shrink-0">
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition">
+                          <div className="w-9 h-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center flex-shrink-0">
                             {u.profilePicture
                               ? <img src={u.profilePicture} alt={u.name} className="w-full h-full rounded-full object-cover" />
                               : <span className="text-white font-bold text-sm">{u.name?.charAt(0)}</span>}
@@ -206,7 +206,7 @@ const Navbar = ({ user }) => {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
+          <div className="md:hidden border-t border-gray-100 py-2 space-y-1">
             {navLinks.map(({ path, label }) => (
               <Link key={path} to={path} onClick={() => setMobileMenuOpen(false)}
                 className={`block px-4 py-2.5 rounded-xl text-sm font-semibold transition

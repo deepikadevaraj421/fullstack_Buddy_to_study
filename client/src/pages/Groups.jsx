@@ -71,11 +71,11 @@ const Groups = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
       <Navbar user={user} />
 
-      <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
 
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Your Groups</h1>
               <p className="text-gray-500 mt-1 text-sm">{groups.length} group{groups.length !== 1 ? 's' : ''} joined</p>
@@ -92,7 +92,7 @@ const Groups = () => {
           </div>
 
           {/* Groups Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.length > 0 ? (
               groups.map((group) => {
                 const latestHealth = group.weeklyHealthHistory?.[group.weeklyHealthHistory.length - 1];
@@ -102,7 +102,7 @@ const Groups = () => {
                   <div
                     key={group._id}
                     onClick={() => !group.isDissolved && navigate(`/app/groups/${group._id}`)}
-                    className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition group
+                    className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition group
                       ${group.isDissolved ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary-200'}`}
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -152,7 +152,7 @@ const Groups = () => {
                     </svg>
                   </div>
                   <h3 className="text-lg font-bold text-gray-700 mb-1">No groups yet</h3>
-                  <p className="text-sm text-gray-400 mb-6">Create your first group or accept an invite from a study buddy.</p>
+                  <p className="text-sm text-gray-400 mb-3">Create your first group or accept an invite from a study buddy.</p>
                   <button
                     onClick={() => { setShowCreateModal(true); setCreateError(''); setSubject(''); }}
                     className="px-5 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold text-sm"
