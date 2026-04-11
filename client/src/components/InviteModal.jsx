@@ -1,566 +1,212 @@
-import { useEffect, useMemo, useState } from 'react';
-
-/**
- * Data assumptions (based on server User model):
- * - user.availability: [{ day: 'Monday', startTime: '19:00', endTime: '21:00' }]
- * - user.preferences.sessionDuration: number (minutes)
- *
- * Proposed schedule payload expected by existing /invites endpoint usage:
- * - [{ days: ['Monday','Wednesday'], startTime: '19:00', durationMinutes: 60 }, ...]
- */
+import { useState, useEffect } from 'react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const DAY_SHORT = {
-  Monday: 'Mon',
-  Tuesday: 'Tue',
-  Wednesday: 'Wed',
-  Thursday: 'Thu',
-  Friday: 'Fri',
-  Saturday: 'Sat',
-  Sunday: 'Sun'
-};
+const DAY_SHORT = { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun' };
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
 
-function minutesFromTimeStr(timeStr) {
-  if (!timeStr || typeof timeStr !== 'string') return null;
-  const [hh, mm] = timeStr.split(':').map(Number);
-  if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
-  return hh * 60 + mm;
-}
+const timeWindowLabel = {
+  morning: 'Morning (6am – 12pm)',
+  afternoon: 'Afternoon (12pm – 6pm)',
+  evening: 'Evening (6pm – 10pm)',
+  night: 'Night (10pm – 6am)',
+};
 
-function timeStrFromMinutes(totalMins) {
-  if (totalMins == null || Number.isNaN(totalMins)) return '';
-  const hh = Math.floor(totalMins / 60);
-  const mm = totalMins % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-}
+const emptySlot = () => ({ days: [], startTime: '', durationMinutes: 60 });
 
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
-/**
- * Derive a "default schedule" from user profile.
- * Returns { days: string[], startTime: string, durationMinutes: number } | null
- */
-function getDefaultScheduleFromProfile(profile) {
-  if (!profile) return null;
-
-  // Days from availability entries
-  const availability = Array.isArray(profile.availability) ? profile.availability : [];
-  const uniqDays = Array.from(
-    new Set(
-      availability
-        .map(a => a?.day)
-        .filter(Boolean)
-        .filter(d => DAYS.includes(d))
-    )
-  );
-
-  // Choose a representative start time: earliest available startTime
-  const times = availability
-    .map(a => a?.startTime)
-    .filter(Boolean)
-    .map(t => ({ t, mins: minutesFromTimeStr(t) }))
-    .filter(x => x.mins != null)
-    .sort((a, b) => a.mins - b.mins);
-
-  const startTime = times.length ? times[0].t : '';
-
-  // Duration: preferences.sessionDuration if exists; else compute from first availability (end-start); else 60
-  let durationMinutes = typeof profile.preferences?.sessionDuration === 'number'
-    ? profile.preferences.sessionDuration
-    : null;
-
-  if (durationMinutes == null) {
-    const a0 = availability.find(a => a?.startTime && a?.endTime);
-    if (a0) {
-      const start = minutesFromTimeStr(a0.startTime);
-      const end = minutesFromTimeStr(a0.endTime);
-      if (start != null && end != null) {
-        const diff = end - start;
-        if (diff > 0) durationMinutes = diff;
-      }
-    }
-  }
-
-  if (durationMinutes == null) durationMinutes = 60;
-
-  // If nothing meaningful set, return null
-  const hasAny = uniqDays.length > 0 || !!startTime || !!durationMinutes;
-  if (!hasAny) return null;
-
-  return {
-    days: uniqDays,
-    startTime,
-    durationMinutes
-  };
-}
-
-function formatScheduleText(schedule) {
-  if (!schedule) return '';
-  const days = Array.isArray(schedule.days) ? schedule.days : [];
-  const dayText = days.length ? days.map(d => DAY_SHORT[d] || d).join(', ') : 'No days selected';
-  const timeText = schedule.startTime ? schedule.startTime : 'No time set';
-  const durText = schedule.durationMinutes ? `${schedule.durationMinutes} min` : 'No duration set';
-  return `${dayText} • ${timeText} • ${durText}`;
-}
-
-function DayChips({ selectedDays, onToggleDay, error }) {
-  return (
-    <div>
-      <div className="flex flex-wrap gap-2">
-        {DAYS.map(day => {
-          const selected = selectedDays.includes(day);
-          return (
-            <button
-              key={day}
-              type="button"
-              onClick={() => onToggleDay(day)}
-              className={[
-                'px-3 py-1 rounded-full text-xs font-medium border transition',
-                selected
-                  ? 'bg-primary-600 text-white border-primary-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:text-primary-700'
-              ].join(' ')}
-            >
-              {DAY_SHORT[day]}
-            </button>
-          );
-        })}
-      </div>
-      {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
-    </div>
-  );
-}
-
-function ReadonlyScheduleCard({ tone = 'teal', schedule, emptyText }) {
-  const bg = tone === 'teal' ? 'bg-teal-50' : 'bg-gray-50';
-  const border = tone === 'teal' ? 'border-teal-100' : 'border-gray-200';
-  const text = tone === 'teal' ? 'text-teal-900' : 'text-gray-900';
-  const subText = tone === 'teal' ? 'text-teal-700' : 'text-gray-600';
-
-  return (
-    <div className={`${bg} ${border} border rounded-xl p-4`}>
-      {schedule ? (
-        <div className="space-y-1">
-          <p className={`text-sm font-semibold ${text}`}>{formatScheduleText(schedule)}</p>
-          <p className={`text-xs ${subText}`}>
-            Days, start time, and duration are taken from the profile default.
-          </p>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-600">{emptyText}</p>
-      )}
-    </div>
-  );
-}
-
-function ProposalCard({
-  index,
-  proposal,
-  active,
-  onSelect,
-  onRemove,
-  canRemove
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={[
-        'w-full text-left border rounded-xl p-3 transition',
-        active ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300 bg-white'
-      ].join(' ')}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold text-gray-700">Option {index + 1}</p>
-          <p className="text-sm font-medium text-gray-900">{formatScheduleText(proposal)}</p>
-        </div>
-        {canRemove ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="text-xs font-semibold text-gray-500 hover:text-red-600"
-          >
-            Remove
-          </button>
-        ) : null}
-      </div>
-    </button>
-  );
-}
-
-export default function InviteModal({
-  isOpen,
-  onClose,
-  invitee,
-  currentUser,
-  subject,
-  onSendInvite
-}) {
-  const inviteeDefault = useMemo(() => getDefaultScheduleFromProfile(invitee), [invitee]);
-  const yourDefault = useMemo(() => getDefaultScheduleFromProfile(currentUser), [currentUser]);
-
-  const initialGroupName = useMemo(() => {
-    const inviteeName = invitee?.name || 'Buddy';
-    const sub = subject?.trim();
-    if (sub) return `${sub} Study Group`;
-    return `${inviteeName}'s Study Group`;
-  }, [invitee, subject]);
-
-  const initialProposal = useMemo(() => {
-    return {
-      days: yourDefault?.days?.length ? yourDefault.days : [],
-      startTime: yourDefault?.startTime || '',
-      durationMinutes: typeof yourDefault?.durationMinutes === 'number' ? yourDefault.durationMinutes : 60
-    };
-  }, [yourDefault]);
-
+export default function InviteModal({ isOpen, onClose, invitee, inviteeProfile, currentUser, subject, onSendInvite }) {
   const [groupName, setGroupName] = useState('');
   const [message, setMessage] = useState('');
-  const [proposals, setProposals] = useState([{ days: [], startTime: '', durationMinutes: 60 }]);
-  const [activeProposalIndex, setActiveProposalIndex] = useState(0);
-  const [touched, setTouched] = useState({ groupName: false, proposal: false, message: false });
-  const [errors, setErrors] = useState({ groupName: '', proposal: '' });
+  const [slots, setSlots] = useState([emptySlot()]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [error, setError] = useState('');
 
-  // Reset + autofill on open
   useEffect(() => {
     if (!isOpen) return;
-    setGroupName(initialGroupName);
+    setGroupName(subject ? `${subject} Study Group` : `${invitee?.name || 'Study'} Group`);
     setMessage('');
-    setProposals([initialProposal]);
-    setActiveProposalIndex(0);
-    setTouched({ groupName: false, proposal: false, message: false });
-    setErrors({ groupName: '', proposal: '' });
-  }, [isOpen, initialGroupName, initialProposal]);
-
-  const activeProposal = proposals[activeProposalIndex] || proposals[0];
-
-  const validate = (next = { groupName, proposals }) => {
-    const nextErrors = { groupName: '', proposal: '' };
-
-    if (!next.groupName || !next.groupName.trim()) {
-      nextErrors.groupName = 'Group name is required.';
-    }
-
-    const hasAtLeastOneValidProposal = Array.isArray(next.proposals) && next.proposals.some(p => {
-      const hasDays = Array.isArray(p.days) && p.days.length > 0;
-      const hasTime = !!p.startTime;
-      const hasDuration = typeof p.durationMinutes === 'number' && p.durationMinutes > 0;
-      return hasDays && hasTime && hasDuration;
-    });
-
-    if (!hasAtLeastOneValidProposal) {
-      nextErrors.proposal = 'Add at least one proposed schedule with days, time, and duration.';
-    }
-
-    return nextErrors;
-  };
-
-  const canSend = useMemo(() => {
-    const nextErrors = validate();
-    return !nextErrors.groupName && !nextErrors.proposal;
-  }, [groupName, proposals]);
-
-  const updateActiveProposal = (patch) => {
-    setProposals(prev => {
-      const copy = [...prev];
-      const current = copy[activeProposalIndex] || copy[0] || { days: [], startTime: '', durationMinutes: 60 };
-      copy[activeProposalIndex] = { ...current, ...patch };
-      return copy;
-    });
-  };
-
-  const toggleDay = (day) => {
-    updateActiveProposal({
-      days: activeProposal.days.includes(day)
-        ? activeProposal.days.filter(d => d !== day)
-        : [...activeProposal.days, day]
-    });
-  };
-
-  const addProposal = () => {
-    setProposals(prev => {
-      if (prev.length >= 3) return prev;
-      const base = prev[0] || initialProposal;
-      const next = [
-        ...prev,
-        {
-          days: Array.isArray(base.days) ? [...base.days] : [],
-          startTime: base.startTime || '',
-          durationMinutes: typeof base.durationMinutes === 'number' ? base.durationMinutes : 60
-        }
-      ];
-      return next;
-    });
-    setActiveProposalIndex(prev => clamp(prev + 1, 0, 2));
-  };
-
-  const removeProposalAt = (idx) => {
-    setProposals(prev => {
-      if (prev.length <= 1) return prev;
-      const next = prev.filter((_, i) => i !== idx);
-      return next;
-    });
-    setActiveProposalIndex(prev => {
-      if (idx === prev) return Math.max(0, prev - 1);
-      if (idx < prev) return prev - 1;
-      return prev;
-    });
-  };
-
-  const handleSend = async () => {
-    const nextErrors = validate();
-    setErrors(nextErrors);
-    setTouched(t => ({ ...t, groupName: true, proposal: true }));
-
-    if (nextErrors.groupName || nextErrors.proposal) return;
-
-    const payload = {
-      groupName: groupName.trim(),
-      inviteeId: invitee?._id || invitee?.userId,
-      proposedSchedules: proposals.map(p => ({
-        days: p.days,
-        startTime: p.startTime,
-        durationMinutes: p.durationMinutes
-      })),
-      message: message?.trim() || ''
-    };
-
-    if (typeof onSendInvite === 'function') {
-      await onSendInvite(payload);
-    } else {
-      // fallback if backend not connected
-      console.log('Invite payload:', payload);
-    }
-
-    onClose?.();
-  };
+    setSlots([emptySlot()]);
+    setActiveIdx(0);
+    setError('');
+  }, [isOpen, invitee, subject]);
 
   if (!isOpen) return null;
 
+  // Invitee's default study info
+  const inviteeDays = inviteeProfile?.availability?.map(a => a.day) || [];
+  const inviteeTime = inviteeProfile?.behavior?.timeWindow;
+  const inviteeStartTime = inviteeProfile?.availability?.[0]?.startTime || '';
+  const inviteeDuration = inviteeProfile?.preferences?.sessionDuration || 60;
+
+  const active = slots[activeIdx] || slots[0];
+
+  const updateSlot = (patch) => {
+    setSlots(prev => prev.map((s, i) => i === activeIdx ? { ...s, ...patch } : s));
+  };
+
+  const toggleDay = (day) => {
+    updateSlot({ days: active.days.includes(day) ? active.days.filter(d => d !== day) : [...active.days, day] });
+  };
+
+  const addSlot = () => {
+    if (slots.length >= 3) return;
+    setSlots(prev => [...prev, emptySlot()]);
+    setActiveIdx(slots.length);
+  };
+
+  const removeSlot = (idx) => {
+    if (slots.length <= 1) return;
+    setSlots(prev => prev.filter((_, i) => i !== idx));
+    setActiveIdx(Math.max(0, activeIdx >= idx ? activeIdx - 1 : activeIdx));
+  };
+
+  // Pre-fill slot from invitee's schedule
+  const prefillFromInvitee = () => {
+    updateSlot({ days: inviteeDays, startTime: inviteeStartTime, durationMinutes: inviteeDuration });
+  };
+
+  const handleSend = async () => {
+    if (!groupName.trim()) { setError('Group name is required.'); return; }
+    const valid = slots.filter(s => s.days.length > 0 && s.startTime);
+    if (valid.length === 0) { setError('Add at least one time option with days and start time.'); return; }
+    setError('');
+    await onSendInvite({
+      groupName: groupName.trim(),
+      inviteeId: invitee?._id || invitee?.userId,
+      proposedSchedules: valid,
+      message: message.trim()
+    });
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Invite {invitee?.name || 'User'}
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Propose a schedule based on your default study pattern.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-              aria-label="Close invite modal"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <div className="px-6 pt-5 pb-4 border-b flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">Invite {invitee?.name}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Propose a study schedule</p>
           </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 space-y-6">
-          {/* 1) Group Name */}
-          <section>
-            <h4 className="text-sm font-bold text-gray-900 mb-3">Group Name</h4>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
-            <input
-              type="text"
-              value={groupName}
-              onChange={(e) => {
-                const v = e.target.value;
-                setGroupName(v);
-                if (touched.groupName) setErrors(prev => ({ ...prev, groupName: validate({ groupName: v, proposals }).groupName }));
-              }}
-              onBlur={() => {
-                setTouched(t => ({ ...t, groupName: true }));
-                setErrors(prev => ({ ...prev, groupName: validate({ groupName, proposals }).groupName }));
-              }}
-              className={[
-                'w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200',
-                errors.groupName ? 'border-red-300' : 'border-gray-200'
-              ].join(' ')}
-              placeholder="Group name"
-            />
-            {errors.groupName && touched.groupName ? (
-              <p className="mt-2 text-xs text-red-600">{errors.groupName}</p>
-            ) : null}
-          </section>
+        <div className="px-6 py-5 space-y-5">
 
-          {/* 2) Invitee Default Schedule */}
-          <section>
-            <h4 className="text-sm font-bold text-gray-900 mb-3">Invitee’s Default Study Schedule</h4>
-            <ReadonlyScheduleCard
-              tone="teal"
-              schedule={inviteeDefault && inviteeDefault.days?.length ? inviteeDefault : null}
-              emptyText="Invitee has not set a default schedule yet."
-            />
-          </section>
-
-          {/* 3) Your Default Schedule */}
-          <section>
-            <h4 className="text-sm font-bold text-gray-900 mb-3">Your Default Study Schedule</h4>
-            <ReadonlyScheduleCard
-              tone="gray"
-              schedule={yourDefault && yourDefault.days?.length ? yourDefault : null}
-              emptyText="You have not set a default schedule yet."
-            />
-          </section>
-
-          {/* 4) Proposed Schedule */}
-          <section>
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <h4 className="text-sm font-bold text-gray-900">Proposed Schedule (You can adjust)</h4>
-              <button
-                type="button"
-                onClick={addProposal}
-                disabled={proposals.length >= 3}
-                className={[
-                  'text-sm font-semibold',
-                  proposals.length >= 3 ? 'text-gray-400 cursor-not-allowed' : 'text-primary-600 hover:text-primary-700'
-                ].join(' ')}
-              >
-                + Add another option
-              </button>
-            </div>
-
-            {/* Proposal list */}
-            <div className="grid sm:grid-cols-3 gap-3 mb-4">
-              {proposals.map((p, idx) => (
-                <ProposalCard
-                  key={idx}
-                  index={idx}
-                  proposal={p}
-                  active={idx === activeProposalIndex}
-                  onSelect={() => setActiveProposalIndex(idx)}
-                  onRemove={() => removeProposalAt(idx)}
-                  canRemove={proposals.length > 1}
-                />
-              ))}
-            </div>
-
-            {/* Editable fields */}
-            <div className="border border-gray-200 rounded-2xl p-4 bg-white">
-              <div className="grid gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Days</label>
-                  <DayChips
-                    selectedDays={activeProposal?.days || []}
-                    onToggleDay={(day) => {
-                      setTouched(t => ({ ...t, proposal: true }));
-                      toggleDay(day);
-                      if (touched.proposal) setErrors(prev => ({ ...prev, proposal: validate({ groupName, proposals }).proposal }));
-                    }}
-                    error={errors.proposal && touched.proposal ? errors.proposal : ''}
-                  />
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                    <input
-                      type="time"
-                      value={activeProposal?.startTime || ''}
-                      onChange={(e) => {
-                        setTouched(t => ({ ...t, proposal: true }));
-                        updateActiveProposal({ startTime: e.target.value });
-                        if (touched.proposal) setErrors(prev => ({ ...prev, proposal: validate({ groupName, proposals }).proposal }));
-                      }}
-                      onBlur={() => {
-                        setTouched(t => ({ ...t, proposal: true }));
-                        setErrors(prev => ({ ...prev, proposal: validate({ groupName, proposals }).proposal }));
-                      }}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"
-                    />
+          {/* Invitee's default schedule */}
+          <div className="bg-teal-50 border border-teal-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-teal-700 uppercase tracking-wide mb-2">
+              {invitee?.name}'s Default Study Time
+            </p>
+            {inviteeDays.length > 0 || inviteeTime ? (
+              <div className="space-y-1">
+                {inviteeDays.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {inviteeDays.map(d => (
+                      <span key={d} className="px-2 py-0.5 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">{DAY_SHORT[d] || d}</span>
+                    ))}
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                    <select
-                      value={activeProposal?.durationMinutes ?? 60}
-                      onChange={(e) => {
-                        setTouched(t => ({ ...t, proposal: true }));
-                        updateActiveProposal({ durationMinutes: Number(e.target.value) });
-                        if (touched.proposal) setErrors(prev => ({ ...prev, proposal: validate({ groupName, proposals }).proposal }));
-                      }}
-                      onBlur={() => {
-                        setTouched(t => ({ ...t, proposal: true }));
-                        setErrors(prev => ({ ...prev, proposal: validate({ groupName, proposals }).proposal }));
-                      }}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200"
-                    >
-                      {DURATION_OPTIONS.map(opt => (
-                        <option key={opt} value={opt}>
-                          {opt} minutes
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {errors.proposal && touched.proposal ? (
-                  <p className="text-xs text-red-600">{errors.proposal}</p>
-                ) : (
-                  <p className="text-xs text-gray-500">
-                    You can propose up to 3 options. Each option needs at least one day, a time, and a duration.
-                  </p>
                 )}
+                {inviteeTime && <p className="text-sm text-teal-800">⏰ {timeWindowLabel[inviteeTime] || inviteeTime}</p>}
+                {inviteeStartTime && <p className="text-sm text-teal-800">🕐 Starts at {inviteeStartTime} • {inviteeDuration} min</p>}
+                <button onClick={prefillFromInvitee} className="mt-2 text-xs font-semibold text-teal-700 hover:text-teal-900 underline">
+                  Use this schedule as my proposal
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-teal-700 italic">{invitee?.name} hasn't set a default schedule yet.</p>
+            )}
+          </div>
+
+          {/* Group Name */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Group Name *</label>
+            <input type="text" value={groupName} onChange={e => setGroupName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+              placeholder="e.g. DSA Study Group" />
+          </div>
+
+          {/* Time Options */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-700">Proposed Time Options *</label>
+              {slots.length < 3 && (
+                <button onClick={addSlot} className="text-xs font-semibold text-primary-600 hover:text-primary-700">
+                  + Add another option
+                </button>
+              )}
+            </div>
+
+            {/* Slot tabs */}
+            {slots.length > 1 && (
+              <div className="flex gap-2 mb-3">
+                {slots.map((_, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    <button onClick={() => setActiveIdx(i)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition ${activeIdx === i ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      Option {i + 1}
+                    </button>
+                    {slots.length > 1 && (
+                      <button onClick={() => removeSlot(i)} className="text-gray-400 hover:text-red-500 text-xs">×</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Active slot editor */}
+            <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-2">Select Days</p>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS.map(day => (
+                    <button key={day} onClick={() => toggleDay(day)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition ${active.days.includes(day) ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 border-gray-200 hover:border-primary-300'}`}>
+                      {DAY_SHORT[day]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                  <input type="time" value={active.startTime} onChange={e => updateSlot({ startTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
+                  <select value={active.durationMinutes} onChange={e => updateSlot({ durationMinutes: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} min</option>)}
+                  </select>
+                </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* 5) Message */}
-          <section>
-            <h4 className="text-sm font-bold text-gray-900 mb-3">Message (optional)</h4>
-            <textarea
-              value={message}
-              onChange={(e) => {
-                setMessage(e.target.value);
-                setTouched(t => ({ ...t, message: true }));
-              }}
-              rows={3}
-              placeholder="Add a message…"
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"
-              maxLength={500}
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">Optional</p>
-              <p className="text-xs text-gray-500">{message.length}/500</p>
-            </div>
-          </section>
+          {/* Message */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Message (optional)</label>
+            <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3}
+              placeholder={`Hi ${invitee?.name}, let's study together!`}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 resize-none"
+              maxLength={500} />
+            <p className="text-xs text-gray-400 text-right mt-1">{message.length}/500</p>
+          </div>
+
+          {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="sm:w-auto w-full px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition font-semibold text-gray-700"
-          >
+        <div className="px-6 py-4 border-t flex gap-3 justify-end">
+          <button onClick={onClose} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-sm">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!canSend}
-            className={[
-              'sm:w-auto w-full px-5 py-2 rounded-xl transition font-semibold text-white',
-              canSend ? 'bg-teal-600 hover:bg-teal-700' : 'bg-gray-300 cursor-not-allowed'
-            ].join(' ')}
-          >
+          <button onClick={handleSend} className="px-5 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold text-sm">
             Send Invite
           </button>
         </div>

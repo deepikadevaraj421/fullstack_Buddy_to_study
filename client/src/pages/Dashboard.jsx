@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [expandedMatch, setExpandedMatch] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [inviteeProfile, setInviteeProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const navigate = useNavigate();
@@ -155,8 +156,18 @@ const Dashboard = () => {
     }
   };
 
-  const handleInvite = (match) => {
+  const handleInvite = async (match) => {
     setSelectedMatch(match);
+    setInviteeProfile(null);
+    // Fetch full profile if it's a real user (not dummy)
+    if (match.userId && !match.userId.toString().startsWith('d')) {
+      try {
+        const res = await api.get(`/users/${match.userId}`);
+        setInviteeProfile(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
     setShowInviteModal(true);
   };
 
@@ -451,6 +462,7 @@ const Dashboard = () => {
         <InviteModal
           isOpen={showInviteModal}
           invitee={selectedMatch}
+          inviteeProfile={inviteeProfile}
           currentUser={user}
           subject={selectedSubject}
           onClose={() => setShowInviteModal(false)}
