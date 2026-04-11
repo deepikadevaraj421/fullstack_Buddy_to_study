@@ -273,13 +273,11 @@ const Dashboard = () => {
           {insights.length > 0 && (
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">🧠</span>
                 <h2 className="text-xl font-bold text-gray-900">Study Insights</h2>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 {insights.map((insight, i) => (
                   <div key={i} className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-                    <span className="text-2xl flex-shrink-0">{insight.icon}</span>
                     <p className="text-sm text-gray-700">{insight.tip}</p>
                   </div>
                 ))}
@@ -337,13 +335,13 @@ const Dashboard = () => {
                           </div>
                           {/* Cluster behavior description */}
                           <div className="mt-2 text-xs text-gray-600">
-                            {match.clusterLabel === 'Consistent Planner' && '📅 Regular study schedule with high commitment'}
-                            {match.clusterLabel === 'Night Owl' && '🦉 Prefers late-night study sessions'}
-                            {match.clusterLabel === 'Weekend Warrior' && '🎯 Maximizes weekend study time'}
-                            {match.clusterLabel === 'Sprint Learner' && '⚡ Intense study bursts with focus'}
-                            {match.clusterLabel === 'Casual Learner' && '😌 Flexible, low-pressure learning'}
-                            {match.clusterLabel === 'Balanced Learner' && '⚖️ Steady, well-rounded approach'}
-                            {!['Consistent Planner', 'Night Owl', 'Weekend Warrior', 'Sprint Learner', 'Casual Learner', 'Balanced Learner'].includes(match.clusterLabel) && '🤔 Learning style analysis in progress'}
+                            {match.clusterLabel === 'Consistent Planner' && 'Regular study schedule with high commitment'}
+                            {match.clusterLabel === 'Night Owl' && 'Prefers late-night study sessions'}
+                            {match.clusterLabel === 'Weekend Warrior' && 'Maximizes weekend study time'}
+                            {match.clusterLabel === 'Sprint Learner' && 'Intense study bursts with focus'}
+                            {match.clusterLabel === 'Casual Learner' && 'Flexible, low-pressure learning'}
+                            {match.clusterLabel === 'Balanced Learner' && 'Steady, well-rounded approach'}
+                            {!['Consistent Planner', 'Night Owl', 'Weekend Warrior', 'Sprint Learner', 'Casual Learner', 'Balanced Learner'].includes(match.clusterLabel) && 'Learning style analysis in progress'}
                           </div>
                         </div>
 
@@ -418,7 +416,7 @@ const Dashboard = () => {
           <div className="grid lg:grid-cols-2 gap-8 mt-8">
               {/* Upcoming Sessions */}
               <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">📅 Upcoming Sessions</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Sessions</h2>
                 {upcomingSessions.length > 0 ? (
                   <div className="space-y-3">
                     {upcomingSessions.map((session) => (
@@ -426,7 +424,7 @@ const Dashboard = () => {
                         <div>
                           <p className="font-semibold text-gray-900">{session.groupName}</p>
                           <p className="text-sm text-gray-600">
-                            🕐 {new Date(session.startTime).toLocaleString()} • {session.durationMinutes} min
+                            {new Date(session.startTime).toLocaleString()} • {session.durationMinutes} min
                           </p>
                         </div>
                         <button
@@ -485,7 +483,6 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Study Pattern</h4>
                 <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-                  <span className="text-2xl">🧠</span>
                   <div>
                     <p className="font-semibold text-purple-800">{selectedProfile.cluster?.label || 'Not assigned'}</p>
                     <p className="text-xs text-purple-600">Confidence: {selectedProfile.cluster?.confidence || 0}%</p>

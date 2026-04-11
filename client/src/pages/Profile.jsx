@@ -152,7 +152,7 @@ const Profile = () => {
               {!editing ? (
                 <button onClick={() => setEditing(true)}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium text-sm flex items-center gap-2">
-                  ✏️ Edit Profile
+                  Edit Profile
                 </button>
               ) : (
                 <div className="flex gap-2">
@@ -162,7 +162,7 @@ const Profile = () => {
                   </button>
                   <button onClick={handleSave} disabled={saving}
                     className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium text-sm">
-                    {saving ? 'Saving...' : '✓ Save'}
+                    {saving ? 'Saving...' : 'Save'}
                   </button>
                 </div>
               )}
@@ -183,11 +183,11 @@ const Profile = () => {
                   <div className="flex gap-1 mt-2 justify-center">
                     <button onClick={() => fileInputRef.current.click()}
                       className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200 transition">
-                      📁 Upload
+                      Upload
                     </button>
                     <button onClick={startCamera}
                       className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200 transition">
-                      📷 Camera
+                      Camera
                     </button>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   </div>
@@ -232,7 +232,9 @@ const Profile = () => {
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-3">Study Pattern</h2>
             <div className="flex items-center gap-4 p-4 bg-primary-50 rounded-lg">
-              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-2xl">🧠</div>
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+              </div>
               <div>
                 <p className="text-xl font-bold text-primary-600">{user?.cluster?.label || 'Not assigned'}</p>
                 <p className="text-sm text-gray-500">Confidence: {user?.cluster?.confidence || 0}%</p>
@@ -384,7 +386,7 @@ const Profile = () => {
             <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg mb-4 bg-black" />
             <div className="flex gap-3">
               <button onClick={capturePhoto} className="flex-1 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
-                📸 Capture
+                Capture
               </button>
               <button onClick={stopCamera} className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
                 Cancel

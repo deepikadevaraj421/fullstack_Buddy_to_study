@@ -209,14 +209,14 @@ export const generateInsights = (user, groups, sessions, tasks) => {
 
   // Cluster-based insight
   const clusterInsights = {
-    'Consistent Planner': { tip: 'Your consistent schedule makes you a top match for other planners. Keep it up!', icon: '📅' },
-    'Night Owl': { tip: 'You perform best at night. Look for study partners with evening/night availability.', icon: '🦉' },
-    'Weekend Warrior': { tip: 'You study intensely on weekends. Consider mid-week check-ins to stay on track.', icon: '⚡' },
-    'Sprint Learner': { tip: 'You prefer deep focused sessions. Pair with Consistent Planners for balance.', icon: '🎯' },
-    'Casual Learner': { tip: 'Joining an active group can boost your consistency by up to 40%.', icon: '🌱' },
+    'Consistent Planner': { tip: 'Your consistent schedule makes you a top match for other planners. Keep it up!' },
+    'Night Owl':          { tip: 'You perform best at night. Look for study partners with evening/night availability.' },
+    'Weekend Warrior':    { tip: 'You study intensely on weekends. Consider mid-week check-ins to stay on track.' },
+    'Sprint Learner':     { tip: 'You prefer deep focused sessions. Pair with Consistent Planners for balance.' },
+    'Casual Learner':     { tip: 'Joining an active group can boost your consistency by up to 40%.' },
   };
   const clusterTip = clusterInsights[user.cluster?.label];
-  if (clusterTip) insights.push({ type: 'cluster', ...clusterTip });
+  if (clusterTip) insights.push({ type: 'cluster', tip: clusterTip.tip });
 
   // Attendance insight
   const totalSessions = sessions.length;
@@ -225,9 +225,9 @@ export const generateInsights = (user, groups, sessions, tasks) => {
 
   if (totalSessions > 0) {
     if (attendanceRate >= 0.8) {
-      insights.push({ type: 'attendance', icon: '🏆', tip: `Excellent! ${Math.round(attendanceRate * 100)}% attendance rate. You're in the top tier of reliable study partners.` });
+      insights.push({ type: 'attendance', tip: `Excellent! ${Math.round(attendanceRate * 100)}% attendance rate. You're in the top tier of reliable study partners.` });
     } else if (attendanceRate < 0.5) {
-      insights.push({ type: 'attendance', icon: '⚠️', tip: `Your attendance is ${Math.round(attendanceRate * 100)}%. Improving it increases your compatibility score with top matches.` });
+      insights.push({ type: 'attendance', tip: `Your attendance is ${Math.round(attendanceRate * 100)}%. Improving it increases your compatibility score with top matches.` });
     }
   }
 
@@ -237,18 +237,16 @@ export const generateInsights = (user, groups, sessions, tasks) => {
   const taskRate = userTasks.length > 0 ? completedTasks / userTasks.length : 0;
 
   if (userTasks.length > 0 && taskRate < 0.6) {
-    insights.push({ type: 'tasks', icon: '📝', tip: `You've completed ${Math.round(taskRate * 100)}% of tasks. Groups with higher task completion have 2x better health scores.` });
+    insights.push({ type: 'tasks', tip: `You've completed ${Math.round(taskRate * 100)}% of tasks. Groups with higher task completion have 2x better health scores.` });
   }
 
-  // Subject diversity insight
   const subjectCount = user.subjects?.length || 0;
   if (subjectCount === 1) {
-    insights.push({ type: 'subjects', icon: '📚', tip: 'Adding more subjects to your profile increases your match pool by up to 3x.' });
+    insights.push({ type: 'subjects', tip: 'Adding more subjects to your profile increases your match pool by up to 3x.' });
   }
 
-  // Group count insight
   if (groups.length === 0) {
-    insights.push({ type: 'groups', icon: '👥', tip: 'You have no active groups. Students in study groups score 35% higher on average.' });
+    insights.push({ type: 'groups', tip: 'You have no active groups. Students in study groups score 35% higher on average.' });
   }
 
   return insights.slice(0, 4);
