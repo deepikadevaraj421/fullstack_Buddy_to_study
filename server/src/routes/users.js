@@ -8,7 +8,7 @@ const router = express.Router();
 // Get all users (excluding current user)
 router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user._id } }).select('-passwordHash');
+    const users = await User.find({ _id: { $ne: req.user._id } }).select('-passwordHash -behavior -availability -preferences');
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -68,6 +68,7 @@ const Dashboard = () => {
       const allUsers = usersRes.data.map(u => ({
         userId: u._id,
         name: u.name,
+        profilePicture: u.profilePicture || '',
         clusterLabel: u.cluster?.label || 'Not assigned',
         skillLevel: u.subjects?.[0]?.skill || 'N/A',
         compatibilityScore: 85,

@@ -21,7 +21,7 @@ router.post('/', auth, async (req, res) => {
     });
     
     await group.save();
-    await group.populate('members', 'name email cluster');
+    await group.populate('members', 'name email cluster profilePicture');
     
     res.status(201).json(group);
   } catch (error) {
@@ -34,7 +34,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const groups = await Group.find({
       members: req.userId
-    }).populate('members', 'name email cluster');
+    }).populate('members', 'name email cluster profilePicture');
     
     res.json(groups);
   } catch (error) {
@@ -46,8 +46,8 @@ router.get('/', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id)
-      .populate('members', 'name email cluster')
-      .populate('voiceParticipants', 'name');
+      .populate('members', 'name email cluster profilePicture')
+      .populate('voiceParticipants', 'name profilePicture');
     
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
@@ -504,7 +504,7 @@ router.get('/:id/recommended', auth, async (req, res) => {
       _id: { $nin: [...existingMemberIds, ...invitedUserIds, req.userId] }, // Exclude self too
       onboardingComplete: true,
       "subjects.name": group.subject // Match users with the group's subject in their subjects array
-    }).select('name email cluster').limit(3);
+    }).select('name email cluster profilePicture').limit(3);
     
     res.json({ recommended: recommendedUsers });
   } catch (error) {
@@ -544,7 +544,7 @@ router.get('/:id/all-users', auth, async (req, res) => {
     const allUsers = await User.find({
       _id: { $nin: [...existingMemberIds, ...invitedUserIds, req.userId] },
       onboardingComplete: true
-    }).select('name email cluster subjects').limit(20); // Limit to 20 for performance
+    }).select('name email cluster subjects profilePicture').limit(20);
     
     res.json({ users: allUsers });
   } catch (error) {

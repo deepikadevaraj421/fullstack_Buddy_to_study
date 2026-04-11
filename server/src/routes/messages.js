@@ -19,7 +19,7 @@ router.get('/groups/:groupId/messages', auth, async (req, res) => {
       return res.status(403).json({ error: 'Not a member of this group' });
     }
     
-    const messages = await Message.find({ groupId }).populate('userId', 'name').sort({ timestamp: 1 });
+    const messages = await Message.find({ groupId }).populate('userId', 'name profilePicture').sort({ timestamp: 1 });
     res.json(messages);
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -64,7 +64,7 @@ router.post('/groups/:groupId/messages', auth, async (req, res) => {
 
     const message = new Message(messageData);
     await message.save();
-    await message.populate('userId', 'name');
+    await message.populate('userId', 'name profilePicture');
 
     console.log(`Message saved: ${message._id}`);
     const io = req.app.get('io');
