@@ -33,41 +33,41 @@ const Notifications = () => {
 
   const loadNotifications = async () => {
     try {
-      // Load database notifications
-      const dbNotificationsRes = await api.get('/notifications');
-      const dbNotifications = dbNotificationsRes.data.map(notification => ({
-        ...notification,
-        isDbNotification: true
-      }));
-      
-      const invitesRes = await api.get('/invites');
-      const sessionsRes = await api.get('/sessions/upcoming');
-      
+      const [dbRes, invitesRes, sessionsRes] = await Promise.all([
+        api.get('/notifications'),
+        api.get('/invites'),
+        api.get('/sessions/upcoming')
+      ]);
+
+      // Map invites by id for quick lookup
+      const inviteMap = {};
+      invitesRes.data.receivedInvites.forEach(inv => { inviteMap[inv._id] = inv; });
+
+      // DB notifications — attach invite object if it's a group_invite
+      const dbNotifications = dbRes.data.map(n => ({
+        ...n,
+        isDbNotification: true,
+        invite: n.type === 'group_invite' && n.inviteId ? inviteMap[n.inviteId] : null
+      })).filter(n => {
+        // Hide group_invite DB notifications whose invite is already responded
+        if (n.type === 'group_invite') return n.invite != null;
+        return true;
+      });
+
+      // Session reminders (within 1 hour)
       const now = new Date();
       const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-      
       const sessionReminders = sessionsRes.data
-        .filter(session => {
-          const sessionTime = new Date(session.startTime);
-          return sessionTime > now && sessionTime <= oneHourLater;
-        })
-        .map(session => ({
-          _id: `session-${session._id}`,
+        .filter(s => { const t = new Date(s.startTime); return t > now && t <= oneHourLater; })
+        .map(s => ({
+          _id: `session-${s._id}`,
           type: 'session_reminder',
-          message: `Session "${session.groupName}" starts in less than 1 hour!`,
-          createdAt: session.startTime,
-          sessionId: session._id
+          message: `Session "${s.groupName}" starts in less than 1 hour!`,
+          createdAt: s.startTime,
+          sessionId: s._id
         }));
-      
-      const inviteNotifications = invitesRes.data.receivedInvites.map(invite => ({
-        _id: invite._id,
-        type: 'group_invite',
-        message: `${invite.fromUserId.name} invited you to join ${invite.groupName}`,
-        createdAt: invite.createdAt,
-        invite
-      }));
-      
-      setNotifications([...dbNotifications, ...sessionReminders, ...inviteNotifications]);
+
+      setNotifications([...dbNotifications, ...sessionReminders]);
     } catch (err) {
       console.error('Failed to load notifications:', err);
     }
