@@ -33,13 +33,14 @@ const clusterDesc = {
 };
 
 const ScoreBadge = ({ score }) => {
-  const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-orange-400';
+  const color = score >= 80 ? 'bg-red-500' : score >= 60 ? 'bg-orange-400' : score >= 40 ? 'bg-yellow-400' : 'bg-green-500';
+  const label = score >= 80 ? 'Critical' : score >= 60 ? 'High' : score >= 40 ? 'Medium' : 'Low';
   return (
     <div className="flex flex-col items-center">
       <div className={`w-12 h-12 rounded-full ${color} flex items-center justify-center shadow`}>
         <span className="text-white font-bold text-sm">{score}</span>
       </div>
-      <span className="text-xs text-gray-400 mt-1">score</span>
+      <span className="text-xs text-gray-400 mt-1">{label}</span>
     </div>
   );
 };
@@ -218,6 +219,22 @@ const Dashboard = () => {
                 </select>
               </div>
 
+              {/* Color ratio legend */}
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+                <span className="text-xs font-semibold text-gray-500">Match Score:</span>
+                {[
+                  { label: 'Critical', color: 'bg-red-500', range: '80–100' },
+                  { label: 'High', color: 'bg-orange-400', range: '60–79' },
+                  { label: 'Medium', color: 'bg-yellow-400', range: '40–59' },
+                  { label: 'Low', color: 'bg-green-500', range: '0–39' },
+                ].map(({ label, color, range }) => (
+                  <div key={label} className="flex items-center gap-1">
+                    <div className={`w-3 h-3 rounded-full ${color}`} />
+                    <span className="text-xs text-gray-600">{label} <span className="text-gray-400">({range})</span></span>
+                  </div>
+                ))}
+              </div>
+
               <div className="space-y-3">
                 {recommendations.map(match => (
                   <div key={match.userId} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition cursor-pointer group"
@@ -231,10 +248,10 @@ const Dashboard = () => {
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">{match.overlapPct}% overlap</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                       <ScoreBadge score={match.compatibilityScore} />
                       <button onClick={e => { e.stopPropagation(); handleInvite(match); }}
-                        className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 transition opacity-0 group-hover:opacity-100">
+                        className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 transition">
                         Invite
                       </button>
                     </div>
