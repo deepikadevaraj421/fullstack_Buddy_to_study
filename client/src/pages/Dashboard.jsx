@@ -120,15 +120,10 @@ const Dashboard = () => {
   const loadUpcomingSessions = async () => {
     try {
       const res = await api.get('/sessions/upcoming');
-      // Also show sessions that started up to 2 hours ago (still joinable)
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-      const relevant = res.data.filter(s => new Date(s.startTime) >= twoHoursAgo);
-      setUpcomingSessions(relevant.slice(0, 5));
-      // Track which ones current user already joined
+      setUpcomingSessions(res.data.slice(0, 5));
+      // Backend now sends attended:true/false per session
       const alreadyJoined = new Set(
-        res.data
-          .filter(s => s.attendance?.some(a => a.status === 'present'))
-          .map(s => s._id)
+        res.data.filter(s => s.attended).map(s => s._id)
       );
       setJoinedSessions(alreadyJoined);
     } catch {}

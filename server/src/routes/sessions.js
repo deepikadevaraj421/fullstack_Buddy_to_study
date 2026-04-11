@@ -81,22 +81,33 @@ router.get('/upcoming', auth, async (req, res) => {
   try {
     const groups = await Group.find({ members: req.userId, isDissolved: false });
     const groupIds = groups.map(g => g._id);
-    
+
+    // Include sessions from 2 hours ago (so recently started sessions still appear)
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const oneDayFromNow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
     const sessions = await Session.find({
       groupId: { $in: groupIds },
-      startTime: { $gte: new Date() }
+      startTime: { $gte: twoHoursAgo, $lte: oneDayFromNow }
     })
     .sort({ startTime: 1 })
-    .populate('groupId', 'subject');
-    
-    const sessionsWithGroupName = sessions.map(s => ({
-      _id: s._id,
-      groupName: s.groupId.subject,
-      startTime: s.startTime,
-      durationMinutes: s.durationMinutes,
-      attendance: s.attendance
-    }));
-    
+    .populate('groupId', 'name subject');
+
+    const sessionsWithGroupName = sessions.map(s => {
+      // Check if current user already marked attendance
+      const myAttendance = s.attendance?.find(
+        a => a.userId?.toString() === req.userId?.toString()
+      );
+      return {
+        _id: s._id,
+        groupName: s.groupId?.name || s.groupId?.subject || 'Study Session',
+        startTime: s.startTime,
+        durationMinutes: s.durationMinutes,
+        attendance: s.attendance,
+        attended: myAttendance?.status === 'present'
+      };
+    });
+
     res.json(sessionsWithGroupName);
   } catch (error) {
     res.status(500).json({ error: error.message });
