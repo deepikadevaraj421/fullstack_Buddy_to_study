@@ -7,6 +7,7 @@ import api from '../utils/api';
 const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [allSubjects, setAllSubjects] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [allMatches, setAllMatches] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -71,11 +72,21 @@ const Dashboard = () => {
       }));
       // Use real users if available, else dummy
       setAllMatches(allUsers.length > 0 ? allUsers : DUMMY_RECOMMENDATIONS);
+
+      // Collect all unique subjects from all users
+      const subjectSet = new Set();
+      usersRes.data.forEach(u => u.subjects?.forEach(s => subjectSet.add(s.name)));
+      // Also add dummy subjects
+      DUMMY_RECOMMENDATIONS.forEach(d => subjectSet.add(d.subject));
+      setAllSubjects([...subjectSet].sort());
+
       await loadRecommendations();
     } catch (err) {
       console.error('Failed to load users:', err);
       setAllMatches(DUMMY_RECOMMENDATIONS);
       setRecommendations(DUMMY_RECOMMENDATIONS.slice(0, 3));
+      // Fallback: use dummy subjects
+      setAllSubjects([...new Set(DUMMY_RECOMMENDATIONS.map(d => d.subject))].sort());
     }
   };
 
@@ -85,11 +96,21 @@ const Dashboard = () => {
         ? `/match/recommendations?subject=${selectedSubject}`
         : '/match/recommendations';
       const res = await api.get(url);
-      // Use real recommendations if available, else dummy
-      setRecommendations(res.data.length > 0 ? res.data : DUMMY_RECOMMENDATIONS.slice(0, 3));
+      if (res.data.length > 0) {
+        setRecommendations(res.data);
+      } else {
+        // Filter dummy by subject if selected
+        const filtered = selectedSubject
+          ? DUMMY_RECOMMENDATIONS.filter(d => d.subject === selectedSubject)
+          : DUMMY_RECOMMENDATIONS.slice(0, 3);
+        setRecommendations(filtered.length > 0 ? filtered : DUMMY_RECOMMENDATIONS.slice(0, 3));
+      }
     } catch (err) {
       console.error('Failed to load recommendations:', err);
-      setRecommendations(DUMMY_RECOMMENDATIONS.slice(0, 3));
+      const filtered = selectedSubject
+        ? DUMMY_RECOMMENDATIONS.filter(d => d.subject === selectedSubject)
+        : DUMMY_RECOMMENDATIONS.slice(0, 3);
+      setRecommendations(filtered.length > 0 ? filtered : DUMMY_RECOMMENDATIONS.slice(0, 3));
     }
   };
 
@@ -235,9 +256,9 @@ const Dashboard = () => {
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
                   >
                     <option value="">All subjects</option>
-                    {user?.subjects?.map((subject, idx) => (
-                      <option key={idx} value={subject.name}>{subject.name} ({subject.skill})</option>
-                    )) || <option disabled>No subjects available</option>}
+                    {allSubjects.map((subject, idx) => (
+                      <option key={idx} value={subject}>{subject}</option>
+                    ))}
                   </select>
                 </div>
               </div>
