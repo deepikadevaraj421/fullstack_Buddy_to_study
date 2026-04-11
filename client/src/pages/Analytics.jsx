@@ -131,7 +131,8 @@ const Analytics = () => {
 
   const subjectData = platform?.topSubjects?.map(s => ({ label: s.name.length > 8 ? s.name.slice(0, 7) + '.' : s.name, value: s.count })) || [];
 
-  const myRank = leaderboard.findIndex(u => u._id?.toString() === user?._id?.toString() || u._id?.toString() === user?.id?.toString()) + 1;
+  const myRank = leaderboard.findIndex(s => s._id?.toString() === user?.id?.toString()) + 1;
+  const myStats = leaderboard.find(s => s._id?.toString() === user?.id?.toString());
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
@@ -154,8 +155,35 @@ const Analytics = () => {
             ))}
           </div>
 
+          {/* My Stats Card */}
+          {myStats && (
+            <div className="bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl shadow-md p-6 mb-8 text-white">
+              <h2 className="text-lg font-bold mb-4">Your Performance</h2>
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar user={user} size="lg" />
+                <div>
+                  <p className="text-xl font-bold">{user?.name}</p>
+                  <p className="text-white/80 text-sm">{myStats.clusterLabel}</p>
+                  {myRank > 0 && <p className="text-white/90 text-sm font-semibold mt-1">Rank #{myRank} on leaderboard</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: 'Score', value: myStats.score },
+                  { label: 'Attendance', value: `${myStats.attendanceRate}%` },
+                  { label: 'Tasks Done', value: `${myStats.taskRate}%` },
+                  { label: 'Streak', value: `${myStats.streak}d` },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-white/20 rounded-lg p-3 text-center">
+                    <p className="text-xl font-bold">{value}</p>
+                    <p className="text-xs text-white/80">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            {/* Cluster Distribution */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Study Behavior Distribution</h2>
               <DonutChart data={clusterData} />

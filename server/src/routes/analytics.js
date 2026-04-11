@@ -43,16 +43,15 @@ router.get('/platform', auth, async (req, res) => {
 // Leaderboard — top users by attendance + task completion
 router.get('/leaderboard', auth, async (req, res) => {
   try {
-    const users = await User.find({ onboardingComplete: true }).select('name profilePicture cluster streak');
+    const users = await User.find({}).select('name profilePicture cluster streak longestStreak');
     const groups = await Group.find({ isDissolved: false });
     const groupIds = groups.map(g => g._id);
     const sessions = await Session.find({ groupId: { $in: groupIds } });
     const tasks = await Task.find({ groupId: { $in: groupIds } });
 
-    const scores = users.map(user => {
-      const uid = user._id.toString();
+    const scores = users.map(u => {
+      const uid = u._id.toString();
 
-      // Attendance score
       let attended = 0, totalSlots = 0;
       sessions.forEach(s => {
         const a = s.attendance?.find(a => a.userId?.toString() === uid);
@@ -60,7 +59,6 @@ router.get('/leaderboard', auth, async (req, res) => {
       });
       const attendanceRate = totalSlots > 0 ? attended / totalSlots : 0;
 
-      // Task score
       let completed = 0, totalTasks = 0;
       tasks.forEach(t => {
         const c = t.completion?.find(c => c.userId?.toString() === uid);
@@ -68,14 +66,17 @@ router.get('/leaderboard', auth, async (req, res) => {
       });
       const taskRate = totalTasks > 0 ? completed / totalTasks : 0;
 
-      const score = Math.round((attendanceRate * 0.5 + taskRate * 0.3 + Math.min((user.streak || 0) / 10, 1) * 0.2) * 100);
+      const score = Math.round(
+        (attendanceRate * 0.5 + taskRate * 0.3 + Math.min((u.streak || 0) / 10, 1) * 0.2) * 100
+      );
 
       return {
-        _id: user._id,
-        name: user.name,
-        profilePicture: user.profilePicture || '',
-        clusterLabel: user.cluster?.label || 'Unassigned',
-        streak: user.streak || 0,
+        _id: u._id.toString(),
+        name: u.name,
+        profilePicture: u.profilePicture || '',
+        clusterLabel: u.cluster?.label || 'Unassigned',
+        streak: u.streak || 0,
+        longestStreak: u.longestStreak || 0,
         attendanceRate: Math.round(attendanceRate * 100),
         taskRate: Math.round(taskRate * 100),
         score
@@ -94,7 +95,7 @@ router.get('/group/:id', auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id).populate('members', 'name profilePicture');
     if (!group) return res.status(404).json({ error: 'Group not found' });
-    if (!group.members.some(m => m._id.equals(req.userId))) return res.status(403).json({ error: 'Not a member' });
+    if (!group.members.some(m => m._id.equals(req.user._id))) return res.status(403).json({ error: 'Not a member' });
 
     // Weekly attendance for last 4 weeks
     const weeks = [];
