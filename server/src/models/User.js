@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema({
   college: String,
   dept: String,
   year: Number,
+  phone: String,
+  bio: String,
+  profilePicture: String,
   onboardingComplete: { type: Boolean, default: false },
   subjects: [{
     name: String,
