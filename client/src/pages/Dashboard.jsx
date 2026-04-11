@@ -221,35 +221,24 @@ const Dashboard = () => {
 
           {/* Behavior Cluster Card */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-4">
               <h2 className="text-sm font-medium text-gray-600">Your Behavior Cluster</h2>
-              <div className="group relative">
-                <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="hidden group-hover:block absolute left-0 top-6 bg-gray-800 text-white text-xs rounded p-2 w-48 z-10">
-                  Based on your onboarding + recent activity
-                </div>
-              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-3xl font-bold text-primary-600 mb-1">
-                  {user?.cluster?.label || 'Not assigned'}
-                </h3>
-                <p className="text-gray-600">Confidence: {user?.cluster?.confidence || 0}%</p>
-                <p className="text-sm text-gray-500 mt-2">
+            <div className="flex items-center gap-5">
+              <Avatar user={user} size="2xl" />
+              <div className="flex-1">
+                <p className="text-xl font-bold text-gray-900">{user?.name}</p>
+                {user?.college && <p className="text-sm text-gray-500">{user.college}{user.dept ? ` · ${user.dept}` : ''}</p>}
+                <h3 className="text-2xl font-bold text-primary-600 mt-2">{user?.cluster?.label || 'Not assigned'}</h3>
+                <p className="text-sm text-gray-500">Confidence: {user?.cluster?.confidence || 0}%</p>
+                <p className="text-sm text-gray-500 mt-1">
                   {user?.cluster?.label === 'Consistent Planner' && 'You prefer regular study sessions with high commitment and structured planning.'}
                   {user?.cluster?.label === 'Night Owl' && 'You study best during late night hours with focused sessions.'}
                   {user?.cluster?.label === 'Sprint Learner' && 'You prefer intense study bursts with high commitment but less frequency.'}
                   {user?.cluster?.label === 'Weekend Warrior' && 'You maximize weekend study time with longer sessions.'}
                   {user?.cluster?.label === 'Casual Learner' && 'You prefer flexible, low-pressure study sessions.'}
+                  {user?.cluster?.label === 'Balanced Learner' && 'You have a steady, well-rounded study approach.'}
                 </p>
-              </div>
-              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
               </div>
             </div>
           </div>
@@ -275,21 +264,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* DS-Powered Insights */}
-          {insights.length > 0 && (
-            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Study Insights</h2>
-              </div>
-              <div className="grid md:grid-cols-2 gap-3">
-                {insights.map((insight, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-                    <p className="text-sm text-gray-700">{insight.tip}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* DS-Powered Insights - removed from here, moved next to upcoming sessions */}
 
           <div className="grid lg:grid-cols-1 gap-8">
             {/* Recommended Matches - Top 3 */}
@@ -446,6 +421,24 @@ const Dashboard = () => {
                   <div className="text-center py-8">
                     <p className="text-gray-500 mb-2">No upcoming sessions</p>
                     <p className="text-xs text-gray-400">Sessions you're invited to will appear here</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Study Insights */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Study Insights</h2>
+                {insights.length > 0 ? (
+                  <div className="space-y-3">
+                    {insights.map((insight, i) => (
+                      <div key={i} className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+                        <p className="text-sm text-gray-700">{insight.tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-sm">Complete sessions and tasks to get personalized insights</p>
                   </div>
                 )}
               </div>

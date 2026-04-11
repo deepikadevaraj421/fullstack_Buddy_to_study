@@ -33,6 +33,10 @@ const Notifications = () => {
 
   const loadNotifications = async () => {
     try {
+      // Mark all as read when page is opened
+      await api.put('/notifications/read-all').catch(() => {});
+      window.dispatchEvent(new Event('notificationUpdate'));
+
       const [dbRes, invitesRes, sessionsRes] = await Promise.all([
         api.get('/notifications'),
         api.get('/invites'),

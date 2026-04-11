@@ -31,7 +31,6 @@ const Navbar = ({ user }) => {
       const res = await api.get('/notifications');
       const sessionsRes = await api.get('/sessions/upcoming');
       
-      // Add session reminders for sessions starting within 1 hour
       const now = new Date();
       const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
       
@@ -48,7 +47,9 @@ const Navbar = ({ user }) => {
           sessionId: session._id
         }));
       
-      setNotifications([...sessionReminders, ...res.data]);
+      // Only count unread DB notifications + session reminders as badge count
+      const unread = res.data.filter(n => !n.read);
+      setNotifications([...sessionReminders, ...unread]);
     } catch (err) {
       console.error('Failed to load notifications:', err);
     }

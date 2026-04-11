@@ -16,6 +16,16 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Mark all as read
+router.put('/read-all', auth, async (req, res) => {
+  try {
+    await Notification.updateMany({ userId: req.user._id }, { read: true });
+    res.json({ message: 'All marked as read' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete notification
 router.delete('/:id', auth, async (req, res) => {
   try {
