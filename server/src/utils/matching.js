@@ -88,8 +88,8 @@ const sigmoid = (x) => 1 / (1 + Math.exp(-x));
  * Features: [scheduleOverlap, skillBalance, clusterMatch, timeWindowMatch, subjectMatch]
  * Weights tuned to prioritize schedule + skill balance
  */
-const LR_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
-const LR_BIAS = -0.5;
+const LR_WEIGHTS = [0.40, 0.30, 0.20, 0.15, 0.10];
+const LR_BIAS = 0.2;
 
 const calculateOverlap = (avail1, avail2) => {
   if (!avail1?.length || !avail2?.length) return 0;
@@ -111,16 +111,22 @@ const calculateSkillBalance = (skillA, skillB) => {
 const logisticCompatibility = (userA, userB, subjectA, subjectB) => {
   const scheduleOverlap = calculateOverlap(userA.availability, userB.availability);
   const skillBalance = calculateSkillBalance(subjectA?.skill, subjectB?.skill);
-  const clusterMatch = userA.cluster?.label === userB.cluster?.label ? 1 : 0.4;
-  const timeWindowMatch = userA.behavior?.timeWindow === userB.behavior?.timeWindow ? 1 :
+  const clusterMatch = userA.cluster?.label === userB.cluster?.label ? 1.0 : 0.3;
+  const timeWindowMatch = userA.behavior?.timeWindow === userB.behavior?.timeWindow ? 1.0 :
     Math.abs((timeWindowToNum[userA.behavior?.timeWindow] ?? 2) - (timeWindowToNum[userB.behavior?.timeWindow] ?? 2)) === 1 ? 0.6 : 0.2;
-  const subjectMatch = subjectA && subjectB ? 1 : 0.5;
+  const subjectMatch = subjectA && subjectB ? 1.0 : 0.4;
 
   const features = [scheduleOverlap, skillBalance, clusterMatch, timeWindowMatch, subjectMatch];
   const z = features.reduce((sum, f, i) => sum + f * LR_WEIGHTS[i], LR_BIAS);
   const probability = sigmoid(z);
 
-  return Math.round(probability * 100);
+  // Scale to 40-100 range so scores are meaningful and differentiated
+  const raw = Math.round(40 + probability * 60);
+
+  // Bonus points for cluster match and high schedule overlap
+  const bonus = (clusterMatch === 1.0 ? 8 : 0) + (scheduleOverlap >= 0.5 ? 5 : 0);
+
+  return Math.min(100, raw + bonus);
 };
 
 // ─── 4. MATCH FINDING ────────────────────────────────────────────────────────

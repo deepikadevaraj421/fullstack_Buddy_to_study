@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 
 const BADGE_DEFS = [
@@ -17,22 +16,85 @@ const BADGE_DEFS = [
   { id: 'early_bird', icon: '🌅', label: 'Early Bird', desc: 'Joined a session before 8 AM', color: 'from-orange-300 to-pink-400' },
 ];
 
-const computeBadges = (user, leaderboard, rank) => {
-  const earned = new Set();
-  if (!user) return earned;
-
-  if ((user.streak || 0) >= 1) earned.add('first_session');
-  if ((user.streak || 0) >= 3) earned.add('streak_3');
-  if ((user.streak || 0) >= 7) earned.add('streak_7');
-  if ((user.streak || 0) >= 30) earned.add('streak_30');
-  if (rank > 0 && rank <= 3) earned.add('top_3');
-  if ((user.subjects?.length || 0) >= 3) earned.add('multi_subject');
-  return earned;
-};
-
-const Achievements = ({ user, leaderboard, rank, compact = false }) => {
+const Achievements = ({ user, leaderboard = [], rank = 0, compact = false }) => {
   const [showAll, setShowAll] = useState(false);
-  const earned = computeBadges(user, leaderboard, rank);
+  const [earned, setEarned] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAndComputeBadges();
+  }, [user, rank]);
+
+  const fetchAndComputeBadges = async () => {
+    const earnedSet = new Set();
+
+    try {
+      // Streak-based badges
+      const streak = user.streak || 0;
+      if (streak >= 1) earnedSet.add('first_session');
+      if (streak >= 3) earnedSet.add('streak_3');
+      if (streak >= 7) earnedSet.add('streak_7');
+      if (streak >= 30) earnedSet.add('streak_30');
+
+      // Leaderboard rank badge
+      if (rank > 0 && rank <= 3) earnedSet.add('top_3');
+
+      // Multi-subject badge
+      if ((user.subjects?.length || 0) >= 3) earnedSet.add('multi_subject');
+
+      // Fetch real data for remaining badges
+      const [analyticsRes, invitesRes, groupsRes] = await Promise.allSettled([
+        api.get('/users/analytics'),
+        api.get('/invites'),
+        api.get('/groups'),
+      ]);
+
+      // Sessions attended → first_session badge
+      const analytics = analyticsRes.status === 'fulfilled' ? analyticsRes.value.data : null;
+      if (analytics?.sessionsThisWeek > 0 || analytics?.attendanceRate > 0) {
+        earnedSet.add('first_session');
+      }
+
+      // Invites sent → Social Butterfly
+      const invites = invitesRes.status === 'fulfilled' ? invitesRes.value.data : null;
+      if ((invites?.sentInvites?.length || 0) >= 3) earnedSet.add('inviter');
+
+      // Groups created → Group Creator
+      const groups = groupsRes.status === 'fulfilled' ? groupsRes.value.data : [];
+      const myGroups = Array.isArray(groups) ? groups : [];
+      if (myGroups.some(g => g.createdBy === user.id || g.createdBy?._id === user.id)) {
+        earnedSet.add('group_creator');
+      }
+
+      // Fetch task completion data per group
+      let totalCompleted = 0;
+      for (const group of myGroups.slice(0, 5)) {
+        try {
+          const tasksRes = await api.get(`/groups/${group._id}/tasks`);
+          const tasks = tasksRes.data || [];
+          tasks.forEach(task => {
+            const myCompletion = task.completion?.find(
+              c => c.userId === user.id || c.userId?._id === user.id
+            );
+            if (myCompletion?.done) totalCompleted++;
+          });
+        } catch {}
+      }
+      if (totalCompleted >= 5) earnedSet.add('tasks_5');
+      if (totalCompleted >= 20) earnedSet.add('tasks_20');
+
+      // Perfect attendance — check if attendanceRate is 100
+      if (analytics?.attendanceRate === 100 && analytics?.sessionsThisWeek > 0) {
+        earnedSet.add('perfect_attendance');
+      }
+
+    } catch {}
+
+    setEarned(earnedSet);
+    setLoading(false);
+  };
+
   const earnedBadges = BADGE_DEFS.filter(b => earned.has(b.id));
   const lockedBadges = BADGE_DEFS.filter(b => !earned.has(b.id));
   const display = showAll ? BADGE_DEFS : [...earnedBadges, ...lockedBadges].slice(0, compact ? 4 : 8);
@@ -40,14 +102,17 @@ const Achievements = ({ user, leaderboard, rank, compact = false }) => {
   if (compact) {
     return (
       <div className="flex flex-wrap gap-2">
-        {earnedBadges.slice(0, 6).map(b => (
-          <div key={b.id} title={`${b.label}: ${b.desc}`}
-            className={`w-10 h-10 rounded-full bg-gradient-to-br ${b.color} flex items-center justify-center shadow-sm text-lg cursor-default`}>
-            {b.icon}
-          </div>
-        ))}
-        {earnedBadges.length === 0 && (
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading badges...</p>
+        ) : earnedBadges.length === 0 ? (
           <p className="text-sm text-gray-400">Complete sessions to earn badges!</p>
+        ) : (
+          earnedBadges.slice(0, 6).map(b => (
+            <div key={b.id} title={`${b.label}: ${b.desc}`}
+              className={`w-10 h-10 rounded-full bg-gradient-to-br ${b.color} flex items-center justify-center shadow-sm text-lg cursor-default`}>
+              {b.icon}
+            </div>
+          ))
         )}
         {earnedBadges.length > 6 && (
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
@@ -63,11 +128,13 @@ const Achievements = ({ user, leaderboard, rank, compact = false }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Achievements</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{earnedBadges.length}/{BADGE_DEFS.length} badges earned</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {loading ? 'Calculating...' : `${earnedBadges.length}/${BADGE_DEFS.length} badges earned`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-20 bg-gray-200 rounded-full h-2">
-            <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"
+            <div className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
               style={{ width: `${(earnedBadges.length / BADGE_DEFS.length) * 100}%` }} />
           </div>
         </div>
@@ -110,5 +177,5 @@ const Achievements = ({ user, leaderboard, rank, compact = false }) => {
   );
 };
 
-export { BADGE_DEFS, computeBadges };
+export { BADGE_DEFS };
 export default Achievements;
