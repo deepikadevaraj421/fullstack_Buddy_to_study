@@ -463,7 +463,7 @@ const Dashboard = () => {
       {/* ── Profile Modal ── */}
       {showProfileModal && selectedProfile && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-y-auto">
 
             {/* Header */}
             <div className="bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 rounded-t-2xl p-6 relative">
@@ -559,7 +559,7 @@ const Dashboard = () => {
               {selectedProfile.availability?.length > 0 && (
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Availability</p>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {selectedProfile.availability.map((a, i) => (
                       <div key={i} className="flex items-center justify-between px-3 py-2 bg-green-50 rounded-lg border border-green-100">
                         <span className="text-sm font-semibold text-green-700">{a.day}</span>
@@ -576,7 +576,7 @@ const Dashboard = () => {
               {selectedProfile.preferences && (
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Study Preferences</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                       <p className="text-xs text-gray-400 mb-0.5">Group Size</p>
                       <p className="text-sm font-semibold text-gray-800">{selectedProfile.preferences.groupSize || '—'} members</p>
