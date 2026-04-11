@@ -28,7 +28,13 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com') ||
+      origin.endsWith('.netlify.app')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -77,22 +83,20 @@ app.get('/api/health', (req, res) => {
 });
 
 // Local dev: Socket.io + server.listen
-if (!isProduction) {
-  const server = createServer(app);
-  const io = new Server(server, {
-    cors: { ...corsOptions, methods: ['GET', 'POST'] },
-    transports: ['websocket', 'polling']
-  });
-  io.on('connection', (socket) => {
-    socket.on('join-group', (groupId) => socket.join(String(groupId)));
-    socket.on('leave-group', (groupId) => socket.leave(String(groupId)));
-  });
-  app.set('io', io);
+const server = createServer(app);
+const io = new Server(server, {
+  cors: { ...corsOptions, methods: ['GET', 'POST'] },
+  transports: ['websocket', 'polling']
+});
+io.on('connection', (socket) => {
+  socket.on('join-group', (groupId) => socket.join(String(groupId)));
+  socket.on('leave-group', (groupId) => socket.leave(String(groupId)));
+});
+app.set('io', io);
 
-  const PORT = process.env.PORT || 5000;
-  connectDB()
-    .then(() => server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`)))
-    .catch(err => { console.error('❌ MongoDB connection error:', err); process.exit(1); });
-}
+const PORT = process.env.PORT || 5000;
+connectDB()
+  .then(() => server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`)))
+  .catch(err => { console.error('❌ MongoDB connection error:', err); process.exit(1); });
 
 export default app;

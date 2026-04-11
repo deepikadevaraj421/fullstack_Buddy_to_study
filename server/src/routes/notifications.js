@@ -7,7 +7,7 @@ const router = express.Router();
 // Get user notifications
 router.get('/', auth, async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.user._id })
+    const notifications = await Notification.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .limit(20);
     res.json(notifications);
@@ -19,7 +19,7 @@ router.get('/', auth, async (req, res) => {
 // Mark all as read
 router.put('/read-all', auth, async (req, res) => {
   try {
-    await Notification.updateMany({ userId: req.user._id }, { read: true });
+    await Notification.updateMany({ userId: req.userId }, { read: true });
     res.json({ message: 'All marked as read' });
   } catch (error) {
     res.status(500).json({ error: error.message });

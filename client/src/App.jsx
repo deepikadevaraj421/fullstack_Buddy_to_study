@@ -10,6 +10,7 @@ import GroupDashboard from './pages/GroupDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import Analytics from './pages/Analytics';
+import Planner from './pages/Planner';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/app/admin" element={<AdminDashboard />} />
         <Route path="/app/profile" element={<Profile />} />
         <Route path="/app/analytics" element={<Analytics />} />
+        <Route path="/app/planner" element={<Planner />} />
       </Routes>
     </BrowserRouter>
   );

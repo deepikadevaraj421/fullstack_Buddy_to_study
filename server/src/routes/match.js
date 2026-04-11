@@ -9,7 +9,10 @@ const router = express.Router();
 router.get('/recommendations', auth, async (req, res) => {
   try {
     const { subject } = req.query;
-    const matches = await findMatches(User, req.user, subject || null, 3);
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) return res.status(404).json({ error: 'User not found' });
+
+    const matches = await findMatches(User, currentUser, subject || null, 3);
     res.json(matches.map(m => ({
       userId: m.user._id,
       name: m.user.name,
@@ -26,19 +29,22 @@ router.get('/recommendations', auth, async (req, res) => {
   }
 });
 
-// Get personalized DS-powered insights
+// Get personalized insights
 router.get('/insights', auth, async (req, res) => {
   try {
     const Group = (await import('../models/Group.js')).default;
     const Session = (await import('../models/Session.js')).default;
     const Task = (await import('../models/Task.js')).default;
 
-    const groups = await Group.find({ members: req.user._id, isDissolved: false });
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) return res.status(404).json({ error: 'User not found' });
+
+    const groups = await Group.find({ members: req.userId, isDissolved: false });
     const groupIds = groups.map(g => g._id);
     const sessions = await Session.find({ groupId: { $in: groupIds } });
     const tasks = await Task.find({ groupId: { $in: groupIds } });
 
-    const insights = generateInsights(req.user, groups, sessions, tasks);
+    const insights = generateInsights(currentUser, groups, sessions, tasks);
     res.json(insights);
   } catch (error) {
     res.status(500).json({ error: error.message });

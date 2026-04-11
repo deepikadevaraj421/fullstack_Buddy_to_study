@@ -8,7 +8,7 @@ const router = express.Router();
 // Get all users (excluding current user)
 router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user._id } }).select('-passwordHash -behavior -availability -preferences');
+    const users = await User.find({ _id: { $ne: req.userId } }).select('-passwordHash -behavior -availability -preferences');
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -25,7 +25,7 @@ router.get('/analytics', auth, async (req, res) => {
     const Session = (await import('../models/Session.js')).default;
     const Task = (await import('../models/Task.js')).default;
 
-    const groups = await Group.find({ members: req.user._id, isDissolved: false });
+    const groups = await Group.find({ members: req.userId, isDissolved: false });
     const groupIds = groups.map(g => g._id);
 
     const sessions = await Session.find({
@@ -38,7 +38,7 @@ router.get('/analytics', auth, async (req, res) => {
     let totalSlots = 0;
     let presentCount = 0;
     sessions.forEach(s => {
-      const userAttendance = s.attendance.find(a => a.userId.equals(req.user._id));
+      const userAttendance = s.attendance.find(a => a.userId.equals(req.userId));
       if (userAttendance) {
         totalSlots++;
         if (userAttendance.status === 'present') presentCount++;
@@ -50,7 +50,7 @@ router.get('/analytics', auth, async (req, res) => {
     const tasks = await Task.find({ groupId: { $in: groupIds } });
     let completedTasks = 0;
     tasks.forEach(t => {
-      const userCompletion = t.completion.find(c => c.userId.equals(req.user._id));
+      const userCompletion = t.completion.find(c => c.userId.equals(req.userId));
       if (userCompletion && userCompletion.done) completedTasks++;
     });
 
@@ -64,9 +64,15 @@ router.get('/analytics', auth, async (req, res) => {
   }
 });
 
-// Get profile — must be before /:id
+// Get my profile (/auth/me equivalent)
 router.get('/profile', auth, async (req, res) => {
-  res.json(req.user);
+  try {
+    const user = await User.findById(req.userId).select('-passwordHash');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Complete onboarding
@@ -75,18 +81,21 @@ router.put('/onboarding', auth, async (req, res) => {
     const { subjects, availability, preferences, behavior } = req.body;
     const cluster = assignCluster(behavior, availability);
 
-    req.user.subjects = subjects;
-    req.user.availability = availability;
-    req.user.preferences = preferences;
-    req.user.behavior = behavior;
-    req.user.cluster = cluster;
-    req.user.onboardingComplete = true;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    await req.user.save();
+    user.subjects = subjects;
+    user.availability = availability;
+    user.preferences = preferences;
+    user.behavior = behavior;
+    user.cluster = cluster;
+    user.onboardingComplete = true;
+
+    await user.save();
 
     res.json({
       message: 'Onboarding completed',
-      user: { id: req.user._id, name: req.user.name, onboardingComplete: true, cluster }
+      user: { id: user._id, name: user.name, onboardingComplete: true, cluster }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -97,11 +106,14 @@ router.put('/onboarding', auth, async (req, res) => {
 router.put('/profile', auth, async (req, res) => {
   try {
     const updates = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
     Object.keys(updates).forEach(key => {
-      if (key !== 'passwordHash' && key !== '_id') req.user[key] = updates[key];
+      if (key !== 'passwordHash' && key !== '_id') user[key] = updates[key];
     });
-    await req.user.save();
-    res.json(req.user);
+    await user.save();
+    res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

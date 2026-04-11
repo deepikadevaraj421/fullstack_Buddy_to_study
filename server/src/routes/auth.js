@@ -82,25 +82,31 @@ router.post('/login', [
 
 // Get current user
 router.get('/me', auth, async (req, res) => {
-  res.json({
-    id: req.user._id,
-    name: req.user.name,
-    email: req.user.email,
-    onboardingComplete: req.user.onboardingComplete,
-    cluster: req.user.cluster,
-    profilePicture: req.user.profilePicture,
-    college: req.user.college,
-    dept: req.user.dept,
-    year: req.user.year,
-    phone: req.user.phone,
-    bio: req.user.bio,
-    subjects: req.user.subjects,
-    availability: req.user.availability,
-    preferences: req.user.preferences,
-    behavior: req.user.behavior,
-    streak: req.user.streak || 0,
-    longestStreak: req.user.longestStreak || 0
-  });
+  try {
+    const user = await User.findById(req.userId).select('-passwordHash');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      onboardingComplete: user.onboardingComplete,
+      cluster: user.cluster,
+      profilePicture: user.profilePicture,
+      college: user.college,
+      dept: user.dept,
+      year: user.year,
+      phone: user.phone,
+      bio: user.bio,
+      subjects: user.subjects,
+      availability: user.availability,
+      preferences: user.preferences,
+      behavior: user.behavior,
+      streak: user.streak || 0,
+      longestStreak: user.longestStreak || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

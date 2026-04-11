@@ -8,4 +8,8 @@ const notificationSchema = new mongoose.Schema({
   read: { type: Boolean, default: false }
 }, { timestamps: true });
 
+// Index for fast per-user notification queries
+notificationSchema.index({ userId: 1, read: 1 });
+notificationSchema.index({ inviteId: 1 });
+
 export default mongoose.model('Notification', notificationSchema);

@@ -6,6 +6,8 @@ import api from '../utils/api';
 const Notifications = () => {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [actionLoading, setActionLoading] = useState(null); // inviteId being processed
+  const [actionError, setActionError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -78,25 +80,31 @@ const Notifications = () => {
   };
 
   const handleAcceptInvite = async (invite, scheduleIndex = 0) => {
+    setActionLoading(invite._id);
+    setActionError(null);
     try {
       const res = await api.post(`/invites/${invite._id}/accept`, { selectedScheduleIndex: scheduleIndex });
-      loadNotifications();
-      alert('Group created!');
+      await loadNotifications();
       navigate(`/app/groups/${res.data.group._id}`);
     } catch (err) {
       console.error('Accept error:', err);
-      alert(err.response?.data?.error || 'Failed to accept invite');
+      setActionError(err.response?.data?.error || 'Failed to accept invite. Please try again.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleRejectInvite = async (invite) => {
+    setActionLoading(invite._id + '-decline');
+    setActionError(null);
     try {
       await api.post(`/invites/${invite._id}/decline`);
-      loadNotifications();
-      alert('Invite declined');
+      await loadNotifications();
     } catch (err) {
       console.error('Reject error:', err);
-      alert(err.response?.data?.error || 'Failed to decline invite');
+      setActionError(err.response?.data?.error || 'Failed to decline invite.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -112,10 +120,22 @@ const Notifications = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
       <Navbar user={user} />
-      
+
       <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Notifications</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Notifications</h1>
+
+          {/* Global error banner */}
+          {actionError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+              <p className="text-sm text-red-700 font-medium">{actionError}</p>
+              <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 ml-3">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {notifications.length > 0 ? (
             <div className="space-y-4">
@@ -172,15 +192,19 @@ const Notifications = () => {
                         <div className="flex gap-3 mt-4">
                           <button
                             onClick={() => handleAcceptInvite(notif.invite)}
-                            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+                            disabled={actionLoading !== null}
+                            className="flex items-center gap-2 px-5 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Accept
+                            {actionLoading === notif.invite?._id ? (
+                              <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Accepting...</>
+                            ) : 'Accept'}
                           </button>
                           <button
                             onClick={() => handleRejectInvite(notif.invite)}
-                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                            disabled={actionLoading !== null}
+                            className="px-5 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Decline
+                            {actionLoading === notif.invite?._id + '-decline' ? 'Declining...' : 'Decline'}
                           </button>
                         </div>
                       )}

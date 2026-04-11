@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Arial', 'Helvetica Neue', 'Helvetica', 'sans-serif'],
+        sans: ["'Times New Roman'", 'Times', 'serif'],
       },
       colors: {
         primary: {
