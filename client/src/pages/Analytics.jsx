@@ -141,12 +141,12 @@ const Analytics = () => {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Analytics</h1>
 
-          {/* Platform Stats */}
+          {/* Personal Stats */}
           <div className="grid grid-cols-3 gap-6 mb-8">
             {[
-              { label: 'Active Students', value: platform?.totalUsers || 0, color: 'text-primary-600' },
-              { label: 'Active Groups', value: platform?.totalGroups || 0, color: 'text-accent-600' },
-              { label: 'Total Sessions', value: platform?.totalSessions || 0, color: 'text-purple-600' },
+              { label: 'My Active Groups', value: platform?.totalUsers || 0, color: 'text-primary-600' },
+              { label: 'Study Partners', value: platform?.totalGroups || 0, color: 'text-accent-600' },
+              { label: 'Sessions Attended', value: platform?.totalSessions || 0, color: 'text-purple-600' },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white rounded-xl shadow-md p-6 text-center">
                 <p className={`text-4xl font-bold ${color}`}>{value}</p>

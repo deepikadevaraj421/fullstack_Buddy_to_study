@@ -69,8 +69,8 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/invites', inviteRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api', messageRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api', messageRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });

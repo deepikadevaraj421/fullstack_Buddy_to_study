@@ -7,26 +7,38 @@ import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Platform-wide analytics (for dashboard stats panel)
+// Personal analytics stats for current user
 router.get('/platform', auth, async (req, res) => {
   try {
-    const [totalUsers, totalGroups, totalSessions] = await Promise.all([
-      User.countDocuments({ onboardingComplete: true }),
-      Group.countDocuments({ isDissolved: false }),
-      Session.countDocuments()
-    ]);
+    const userId = req.user._id;
 
-    // Cluster distribution
-    const users = await User.find({ onboardingComplete: true }).select('cluster subjects');
+    // Groups the user is in
+    const myGroups = await Group.find({ members: userId, isDissolved: false });
+    const myGroupIds = myGroups.map(g => g._id);
+
+    // Sessions the user attended
+    const mySessions = await Session.find({ groupId: { $in: myGroupIds } });
+    const myAttended = mySessions.filter(s =>
+      s.attendance?.some(a => a.userId?.toString() === userId.toString() && a.status === 'present')
+    ).length;
+
+    // Study partners (unique members across all groups excluding self)
+    const partnerSet = new Set();
+    myGroups.forEach(g => g.members.forEach(m => {
+      if (m.toString() !== userId.toString()) partnerSet.add(m.toString());
+    }));
+
+    // Cluster distribution across all users (for the donut chart)
+    const allUsers = await User.find({ onboardingComplete: true }).select('cluster subjects');
     const clusterDist = {};
-    users.forEach(u => {
+    allUsers.forEach(u => {
       const label = u.cluster?.label || 'Unassigned';
       clusterDist[label] = (clusterDist[label] || 0) + 1;
     });
 
     // Subject popularity
     const subjectCount = {};
-    users.forEach(u => u.subjects?.forEach(s => {
+    allUsers.forEach(u => u.subjects?.forEach(s => {
       subjectCount[s.name] = (subjectCount[s.name] || 0) + 1;
     }));
     const topSubjects = Object.entries(subjectCount)
@@ -34,7 +46,13 @@ router.get('/platform', auth, async (req, res) => {
       .slice(0, 6)
       .map(([name, count]) => ({ name, count }));
 
-    res.json({ totalUsers, totalGroups, totalSessions, clusterDist, topSubjects });
+    res.json({
+      totalUsers: myGroups.length,           // my active groups
+      totalGroups: partnerSet.size,           // my study partners
+      totalSessions: myAttended,             // sessions I attended
+      clusterDist,
+      topSubjects
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
