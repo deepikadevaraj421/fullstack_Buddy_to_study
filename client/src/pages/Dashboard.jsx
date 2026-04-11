@@ -34,8 +34,8 @@ const clusterDesc = {
 };
 
 const ScoreBadge = ({ score }) => {
-  const color = score >= 80 ? 'bg-red-500' : score >= 60 ? 'bg-orange-400' : score >= 40 ? 'bg-yellow-400' : 'bg-green-500';
-  const label = score >= 80 ? 'Critical' : score >= 60 ? 'High' : score >= 40 ? 'Medium' : 'Low';
+  const color = score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-blue-500' : score >= 40 ? 'bg-yellow-400' : 'bg-gray-400';
+  const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Low';
   return (
     <div className="flex flex-col items-center">
       <div className={`w-14 h-14 rounded-full ${color} flex items-center justify-center shadow`}>
@@ -270,10 +270,10 @@ const Dashboard = () => {
               <div className="flex flex-wrap items-center gap-4 mb-4 p-3 bg-gray-50 rounded-xl">
                 <span className="text-sm font-bold text-gray-600">Match Score:</span>
                 {[
-                  { label: 'Critical', color: 'bg-red-500', range: '80–100' },
-                  { label: 'High', color: 'bg-orange-400', range: '60–79' },
-                  { label: 'Medium', color: 'bg-yellow-400', range: '40–59' },
-                  { label: 'Low', color: 'bg-green-500', range: '0–39' },
+                  { label: 'Excellent', color: 'bg-emerald-500', range: '80–100' },
+                  { label: 'Good', color: 'bg-blue-500', range: '60–79' },
+                  { label: 'Fair', color: 'bg-yellow-400', range: '40–59' },
+                  { label: 'Low', color: 'bg-gray-400', range: '0–39' },
                 ].map(({ label, color, range }) => (
                   <div key={label} className="flex items-center gap-1.5">
                     <div className={`w-3.5 h-3.5 rounded-full ${color}`} />

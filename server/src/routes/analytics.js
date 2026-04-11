@@ -11,7 +11,11 @@ const skillToNum = (s) => ({ beginner: 1, intermediate: 2, advanced: 3 }[s?.toLo
 // Personal analytics stats for current user
 router.get('/platform', auth, async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.userId;
+
+    // Fetch the current user for cluster/subjects data
+    const currentUser = await User.findById(userId).select('cluster subjects');
+    if (!currentUser) return res.status(404).json({ error: 'User not found' });
 
     // Groups the user is in
     const myGroups = await Group.find({ members: userId, isDissolved: false });
@@ -31,13 +35,13 @@ router.get('/platform', auth, async (req, res) => {
 
     // My cluster (single value)
     const clusterDist = {};
-    if (req.user.cluster?.label) {
-      clusterDist[req.user.cluster.label] = 1;
+    if (currentUser.cluster?.label) {
+      clusterDist[currentUser.cluster.label] = 1;
     }
 
     // My subjects only
     const subjectCount = {};
-    req.user.subjects?.forEach(s => {
+    currentUser.subjects?.forEach(s => {
       subjectCount[s.name] = skillToNum(s.skill);
     });
     const topSubjects = Object.entries(subjectCount)
@@ -45,9 +49,9 @@ router.get('/platform', auth, async (req, res) => {
       .sort((a, b) => b.count - a.count);
 
     res.json({
-      totalUsers: myGroups.length,           // my active groups
-      totalGroups: partnerSet.size,           // my study partners
-      totalSessions: myAttended,             // sessions I attended
+      totalUsers: myGroups.length,       // my active groups
+      totalGroups: partnerSet.size,      // my study partners
+      totalSessions: myAttended,         // sessions I attended
       clusterDist,
       topSubjects
     });
@@ -111,7 +115,9 @@ router.get('/group/:id', auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id).populate('members', 'name profilePicture');
     if (!group) return res.status(404).json({ error: 'Group not found' });
-    if (!group.members.some(m => m._id.equals(req.user._id))) return res.status(403).json({ error: 'Not a member' });
+    if (!group.members.some(m => m._id.equals(req.userId))) {
+      return res.status(403).json({ error: 'Not a member' });
+    }
 
     // Weekly attendance for last 4 weeks
     const weeks = [];
