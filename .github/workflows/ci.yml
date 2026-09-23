@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: 20
 
+      # Frontend CI
       - name: Install frontend dependencies
         working-directory: client
         run: npm ci --legacy-peer-deps
@@ -31,33 +32,47 @@ jobs:
         working-directory: client
         run: npm run build
 
+      # Backend CI
       - name: Install backend dependencies
         working-directory: server
         run: npm ci
 
+      # AWS authentication only when pushing to main
       - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-1
 
+      # Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build frontend Docker image
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Frontend Docker image
+      - name: Build and push frontend Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./client
-          file: client/Dockerfile
-          push: false
-          load: true
-          tags: buddy-to-study-frontend:ci
+          file: ./client/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/buddy-to-study-frontend:latest
 
-      - name: Build backend Docker image
+      # Backend Docker image
+      - name: Build and push backend Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./server
-          file: server/Dockerfile
-          push: false
-          load: true
-          tags: buddy-to-study-backend:ci
+          file: ./server/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/buddy-to-study-backend:latest
